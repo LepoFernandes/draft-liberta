@@ -7,10 +7,16 @@
 body {
   min-height: 100vh;
 
+  background-color: #0b1220;
+  color: #f5f1e6;
+
+  font-family: Arial, sans-serif;
+}
+
+/* raiz do app */
+#root {
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-
-  background-color: #b08d57;
-  color: #f5f1e6;
 }
