@@ -36,6 +36,17 @@ export default function DraftScreen() {
             (selected) => selected.name === player.name)
     }
 
+    function calcularOverall() {
+
+        if (selectedPlayers.length === 0) {
+            return 0
+        }
+
+        const soma = selectedPlayers.reduce(
+            (acc, player) => acc + player.overall, 0);
+        return Math.round(soma / selectedPlayers.length);
+    }
+
     return (
         <div className="draft-screen">
             <h1>Draft Liberta</h1>
@@ -168,7 +179,11 @@ export default function DraftScreen() {
                 <div className="player-list">
 
                     <h2>
-                        {currentTeam ? currentTeam.name : "Vamos começar"}
+                        {selectedPlayers.length === 11
+                            ? "SEU TIME"
+                            : currentTeam
+                                ? currentTeam.name
+                                : "Vamos começar"}
                     </h2>
 
                     {!currentTeam && (
@@ -177,7 +192,7 @@ export default function DraftScreen() {
                         </p>
                     )}
 
-                    {currentTeam && (
+                    {currentTeam && selectedPlayers.length < 11 && (
                         <ul className="list">
                             {currentTeam.players.map((player) => (
                                 <li
@@ -196,11 +211,33 @@ export default function DraftScreen() {
                         </ul>
                     )}
 
+                    {selectedPlayers.length === 11 && (
+                        <div className="team-summary">
+
+                            <h3>🏆 ELENCO COMPLETO</h3>
+
+                            <p>
+                                Overall Médio: {calcularOverall()}
+                            </p>
+
+                            <ul className="summary-list">
+                                {selectedPlayers.map((player) => (
+                                    <li key={player.name}>
+                                        {player.position} - {player.name} - {player.overall}
+                                    </li>
+                                ))}
+                            </ul>
+
+                        </div>
+                    )}
+
                     <button
                         className="button-draft"
                         onClick={sortearTme}
                     >
-                        SORTEAR TIMES
+                        {selectedPlayers.length === 11
+                            ? "SIMULAR PARTIDA"
+                            : "SORTEAR TIME"}
                     </button>
 
                 </div>

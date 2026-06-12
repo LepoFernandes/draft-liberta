@@ -126,6 +126,27 @@
 }
 
 
+.team-summary {
+    margin-top: 15px;
+    text-align: left;
+}
+
+.team-summary h3 {
+    text-align: center;
+    color: #d4af37;
+    margin-bottom: 15px;
+}
+
+.summary-list {
+    list-style: none;
+    padding: 0;
+}
+
+.summary-list li {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
 .button-draft{
     margin-top: 50px;
     padding: 14px 40px;
