@@ -13,7 +13,7 @@ body {
   font-family: Arial, sans-serif;
 }
 
-/* raiz do app */
+
 #root {
   min-height: 100vh;
   display: flex;

@@ -43,26 +43,50 @@
 }
 
 .pos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.pos-overall {
     width: 60px;
     height: 60px;
-    background-color: rgba(255, 255, 255, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    border-radius: 10px;
+
     display: flex;
     justify-content: center;
     align-items: center;
+
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+
     font-weight: bold;
     color: #f5f1e6;
+
     cursor: pointer;
     transition: 0.2s;
-
 }
 
-.pos:hover{
+.pos-overall:hover {
     transform: scale(1.1);
-    background:rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.25);
 }
 
+.pos-name {
+    font-size: 11px;
+    max-width: 70px;
+    text-align: center;
+    color: #f5f1e6;
+    line-height: 1.2;
+}
+
+.empty-message {
+    margin-top: 50px;
+    color: #f5f1e6;
+    font-style: italic;
+    line-height: 1.5;
+}
 
 .player-list{
     color: #f5f1e6;
@@ -122,10 +146,16 @@
 
 
 
+.item.selected {
+    background: rgba(212, 175, 55, 0.25);
+    opacity: 0.6;
+    cursor: default;
+}
 
 
-
-
+.item.selected:hover {
+    transform: none;
+}
 
 
 @media (max-width: 768px) {
