@@ -6,17 +6,13 @@
 
 body {
   min-height: 100vh;
-
-  background-color: #0b1220;
   color: #f5f1e6;
-
   font-family: Arial, sans-serif;
 }
-
 
 #root {
   min-height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  background-color: #0b1b24;
 }

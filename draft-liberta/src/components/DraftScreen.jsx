@@ -4,25 +4,107 @@ import { teams } from "../data/Teams";
 import "../styles/DraftScreen.css";
 
 export default function DraftScreen() {
+    const [currentTeam, setCurrentTeam] = useState(null);
+    const [selectedPlayers, setSelectedPlayers] = useState([]);
+    const [pendingPlayer, setPendingPlayer] = useState(null);
+    const [rolling, setRolling] = useState(false);
+    const [usedTeams, setUsedTeams] = useState(() => new Set());
+    const isTeamLocked = selectedPlayers.length > 0;
+    const draftStarted = currentTeam !== null;
+    const [draftLocked, setDraftLocked] = useState(false);
 
-    const [currentTeam, setCurrentTeam] = useState(null)
+    const positionGroups = {
+        CB1: ["CB1", "CB2"],
+        CB2: ["CB1", "CB2"],
 
-    const [selectedPlayers, setSelectedPlayers] = useState([])
+        CM1: ["CM1", "CM2"],
+        CM2: ["CM1", "CM2"],
+    };
 
     function sortearTme() {
-        setCurrentTeam(teams[0]);
+        if (rolling) return;
+
+        // só pode sortear novo time se o anterior estiver travado
+        if (!draftLocked && selectedPlayers.length > 0) return;
+
+        setRolling(true);
+
+        const availableTeams = teams.filter(
+            (t) => !usedTeams.has(t.id)
+        );
+
+        if (availableTeams.length === 0) {
+            availableTeams = teams;
+            setUsedTeams([]);
+        }
+
+        const finalTeam =
+            availableTeams[Math.floor(Math.random() * availableTeams.length)];
+
+        let i = 0;
+
+        const interval = setInterval(() => {
+            setCurrentTeam(availableTeams[i % availableTeams.length]);
+            i++;
+        }, 100);
+
+        setTimeout(() => {
+            clearInterval(interval);
+
+            setCurrentTeam(finalTeam);
+            setUsedTeams((prev) => {
+                const next = new Set(prev);
+                next.add(finalTeam.id);
+                return next;
+            });
+
+
+            setPendingPlayer(null);
+
+            setDraftLocked(false); // 🔥 libera novo draft
+
+            setRolling(false);
+        }, 1200);
     }
 
     function selecionarJogador(player) {
+        if (draftLocked) return; // 🔒 bloqueia troca
+        setPendingPlayer(player);
+    }
+
+    function confirmarJogador(position) {
+        if (!pendingPlayer || draftLocked) return;
+
+        const allowed = positionGroups[position] || [position];
+
+        if (!allowed.includes(pendingPlayer.position)) return;
+
         const posicaoOcupada = selectedPlayers.some(
-            (selected) => selected.position === player.position
+            (p) => p.position === position
         );
 
-        if (posicaoOcupada) {
-            return;
-        }
+        if (posicaoOcupada) return;
 
-        setSelectedPlayers((prev) => [...prev, player]);
+        setSelectedPlayers((prev) => [
+            ...prev,
+            {
+                ...pendingPlayer,
+                position
+            }
+        ]);
+
+        setPendingPlayer(null);
+
+        // 🔥 TRAVA O TIME DEPOIS DO 1º JOGADOR
+        setDraftLocked(true);
+    }
+
+    function isActive(position) {
+        if (!pendingPlayer) return false;
+
+        const allowed = positionGroups[position] || [position];
+
+        return allowed.includes(pendingPlayer.position);
     }
 
     function getSelectedPlayer(position) {
@@ -63,10 +145,14 @@ export default function DraftScreen() {
 
             <div className="draft-content">
 
-                <div className="field">
+                <div className={`field ${draftLocked ? "locked" : ""}`}>
 
+                    {/* GK */}
                     <div className="line">
-                        <div className="pos">
+                        <div
+                            className={`pos ${isActive("GK") ? "active-pos" : ""}`}
+                            onClick={() => confirmarJogador("GK")}
+                        >
                             <div className="pos-overall">
                                 {getSelectedPlayer("GK")?.overall || "GK"}
                             </div>
@@ -76,8 +162,13 @@ export default function DraftScreen() {
                         </div>
                     </div>
 
+                    {/* DEFESA */}
                     <div className="line">
-                        <div className="pos">
+
+                        <div
+                            className={`pos ${isActive("LB") ? "active-pos" : ""}`}
+                            onClick={() => confirmarJogador("LB")}
+                        >
                             <div className="pos-overall">
                                 {getSelectedPlayer("LB")?.overall || "LB"}
                             </div>
@@ -86,7 +177,10 @@ export default function DraftScreen() {
                             </div>
                         </div>
 
-                        <div className="pos">
+                        <div
+                            className={`pos ${isActive("CB1") ? "active-pos" : ""}`}
+                            onClick={() => confirmarJogador("CB1")}
+                        >
                             <div className="pos-overall">
                                 {getSelectedPlayer("CB1")?.overall || "CB"}
                             </div>
@@ -95,7 +189,10 @@ export default function DraftScreen() {
                             </div>
                         </div>
 
-                        <div className="pos">
+                        <div
+                            className={`pos ${isActive("CB2") ? "active-pos" : ""}`}
+                            onClick={() => confirmarJogador("CB2")}
+                        >
                             <div className="pos-overall">
                                 {getSelectedPlayer("CB2")?.overall || "CB"}
                             </div>
@@ -104,7 +201,10 @@ export default function DraftScreen() {
                             </div>
                         </div>
 
-                        <div className="pos">
+                        <div
+                            className={`pos ${isActive("RB") ? "active-pos" : ""}`}
+                            onClick={() => confirmarJogador("RB")}
+                        >
                             <div className="pos-overall">
                                 {getSelectedPlayer("RB")?.overall || "RB"}
                             </div>
@@ -112,10 +212,15 @@ export default function DraftScreen() {
                                 {getSelectedPlayer("RB")?.name || ""}
                             </div>
                         </div>
+
                     </div>
 
+                    {/* CDM */}
                     <div className="line">
-                        <div className="pos">
+                        <div
+                            className={`pos ${isActive("CDM") ? "active-pos" : ""}`}
+                            onClick={() => confirmarJogador("CDM")}
+                        >
                             <div className="pos-overall">
                                 {getSelectedPlayer("CDM")?.overall || "CDM"}
                             </div>
@@ -125,8 +230,13 @@ export default function DraftScreen() {
                         </div>
                     </div>
 
+                    {/* MEIO */}
                     <div className="line">
-                        <div className="pos">
+
+                        <div
+                            className={`pos ${isActive("CM1") ? "active-pos" : ""}`}
+                            onClick={() => confirmarJogador("CM1")}
+                        >
                             <div className="pos-overall">
                                 {getSelectedPlayer("CM1")?.overall || "CM"}
                             </div>
@@ -135,7 +245,10 @@ export default function DraftScreen() {
                             </div>
                         </div>
 
-                        <div className="pos">
+                        <div
+                            className={`pos ${isActive("CM2") ? "active-pos" : ""}`}
+                            onClick={() => confirmarJogador("CM2")}
+                        >
                             <div className="pos-overall">
                                 {getSelectedPlayer("CM2")?.overall || "CM"}
                             </div>
@@ -143,10 +256,16 @@ export default function DraftScreen() {
                                 {getSelectedPlayer("CM2")?.name || ""}
                             </div>
                         </div>
+
                     </div>
 
+                    {/* ATAQUE */}
                     <div className="line">
-                        <div className="pos">
+
+                        <div
+                            className={`pos ${isActive("LW") ? "active-pos" : ""}`}
+                            onClick={() => confirmarJogador("LW")}
+                        >
                             <div className="pos-overall">
                                 {getSelectedPlayer("LW")?.overall || "LW"}
                             </div>
@@ -155,7 +274,10 @@ export default function DraftScreen() {
                             </div>
                         </div>
 
-                        <div className="pos">
+                        <div
+                            className={`pos ${isActive("ST") ? "active-pos" : ""}`}
+                            onClick={() => confirmarJogador("ST")}
+                        >
                             <div className="pos-overall">
                                 {getSelectedPlayer("ST")?.overall || "ST"}
                             </div>
@@ -164,7 +286,10 @@ export default function DraftScreen() {
                             </div>
                         </div>
 
-                        <div className="pos">
+                        <div
+                            className={`pos ${isActive("RW") ? "active-pos" : ""}`}
+                            onClick={() => confirmarJogador("RW")}
+                        >
                             <div className="pos-overall">
                                 {getSelectedPlayer("RW")?.overall || "RW"}
                             </div>
@@ -172,24 +297,28 @@ export default function DraftScreen() {
                                 {getSelectedPlayer("RW")?.name || ""}
                             </div>
                         </div>
+
                     </div>
 
                 </div>
 
-                <div className="player-list">
+                <div className={`player-list ${rolling ? "rolling" : ""} ${draftLocked ? "locked" : ""}`}>
 
-                    <h2>
+                    <h2 className="panel-title">
                         {selectedPlayers.length === 11
-                            ? "SEU TIME"
+                            ? "SEU ELENCO"
                             : currentTeam
                                 ? currentTeam.name
-                                : "Vamos começar"}
+                                : "DRAFT LIBERTA"}
                     </h2>
 
                     {!currentTeam && (
-                        <p className="empty-message">
-                            Clique em "Sortear Time" para começar seu draft.
-                        </p>
+                        <div className="empty-state">
+                            <p className="empty-title">⚽ Pronto pra começar o draft?</p>
+                            <p className="empty-subtitle">
+                                Sorteia um time e monta teu elenco histórico da Libertadores.
+                            </p>
+                        </div>
                     )}
 
                     {currentTeam && selectedPlayers.length < 11 && (
@@ -197,10 +326,13 @@ export default function DraftScreen() {
                             {currentTeam.players.map((player) => (
                                 <li
                                     key={player.name}
-                                    className={`item ${jogadorSelecionado(player) ? "selected" : ""
-                                        }`}
+                                    className={`item 
+                                    ${jogadorSelecionado(player) ? "selected" : ""} 
+                                    ${pendingPlayer?.name === player.name ? "pending" : ""} 
+                                    ${draftLocked ? "locked-item" : ""}
+                                    `}
                                     onClick={() => {
-                                        if (!jogadorSelecionado(player)) {
+                                        if (!draftLocked) {
                                             selecionarJogador(player);
                                         }
                                     }}
@@ -216,10 +348,6 @@ export default function DraftScreen() {
 
                             <h3>🏆 ELENCO COMPLETO</h3>
 
-                            <p>
-                                Overall Médio: {calcularOverall()}
-                            </p>
-
                             <ul className="summary-list">
                                 {selectedPlayers.map((player) => (
                                     <li key={player.name}>
@@ -227,6 +355,10 @@ export default function DraftScreen() {
                                     </li>
                                 ))}
                             </ul>
+
+                            <p>
+                                Overall Médio: {calcularOverall()}
+                            </p>
 
                         </div>
                     )}
