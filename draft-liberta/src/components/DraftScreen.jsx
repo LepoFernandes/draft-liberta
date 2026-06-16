@@ -9,9 +9,11 @@ export default function DraftScreen() {
     const [pendingPlayer, setPendingPlayer] = useState(null);
     const [rolling, setRolling] = useState(false);
     const [usedTeams, setUsedTeams] = useState(() => new Set());
-    const isTeamLocked = selectedPlayers.length > 0;
-    const draftStarted = currentTeam !== null;
     const [draftLocked, setDraftLocked] = useState(false);
+    const [gamePhase, setGamePhase] = useState("draft")
+    const [group, setGroup] = useState([])
+    const [drawingGroup, setDrawingGroup] = useState(false)
+
 
     const positionGroups = {
         CB1: ["CB1", "CB2"],
@@ -21,6 +23,24 @@ export default function DraftScreen() {
         CM2: ["CM1", "CM2"],
     };
 
+    const ordemPosicoes = [
+        "GK",
+        "LB",
+        "CB1",
+        "CB2",
+        "RB",
+        "CDM",
+        "CM1",
+        "CM2",
+        "LW",
+        "ST",
+        "RW"
+    ]
+
+    const elencoOrdenado = [...selectedPlayers].sort((a, b) =>
+        ordemPosicoes.indexOf(a.position) -
+        ordemPosicoes.indexOf(b.position))
+
     function sortearTme() {
         if (rolling) return;
 
@@ -28,13 +48,13 @@ export default function DraftScreen() {
 
         setRolling(true);
 
-        const availableTeams = teams.filter(
+        let availableTeams = teams.filter(
             (t) => !usedTeams.has(t.id)
         );
 
         if (availableTeams.length === 0) {
             availableTeams = teams;
-            setUsedTeams([]);
+            setUsedTeams(new Set());
         }
 
         const finalTeam =
@@ -60,15 +80,18 @@ export default function DraftScreen() {
 
             setPendingPlayer(null);
 
-            setDraftLocked(false); 
+            setDraftLocked(false);
 
             setRolling(false);
         }, 1200);
     }
 
     function selecionarJogador(player) {
-        if (draftLocked) return; 
-        setPendingPlayer(player);
+        if (draftLocked) return;
+        setPendingPlayer({
+            ...player,
+            teamId: currentTeam.id
+        });
     }
 
     function confirmarJogador(position) {
@@ -112,7 +135,10 @@ export default function DraftScreen() {
 
     function jogadorSelecionado(player) {
         return selectedPlayers.some(
-            (selected) => selected.name === player.name)
+            (selected) =>
+                selected.name === player.name &&
+                selected.teamId === currentTeam.id
+        );
     }
 
     function calcularOverall() {
@@ -124,6 +150,29 @@ export default function DraftScreen() {
         const soma = selectedPlayers.reduce(
             (acc, player) => acc + player.overall, 0);
         return Math.round(soma / selectedPlayers.length);
+    }
+
+    function iniciarLibertadores() {
+
+        setGamePhase("groups")
+        setDrawingGroup(true)
+
+        const shuffled = [...teams].sort(() =>
+            Math.random() - 0.5)
+
+        const grupo = shuffled.slice(0, 3).map(team => team.name)
+
+        setTimeout(() => {
+
+            setGroup([
+                "Seu Time",
+                ...grupo
+            ])
+
+            setDrawingGroup(false)
+
+        }, 2500)
+
     }
 
     return (
@@ -285,71 +334,126 @@ export default function DraftScreen() {
                 </div>
 
                 <div className={`player-list ${rolling ? "rolling" : ""} ${draftLocked ? "locked" : ""}`}>
-                    <h2 className="panel-title">
-                        {selectedPlayers.length === 11
-                            ? "SEU ELENCO"
-                            : currentTeam
-                                ? currentTeam.name
-                                : "DRAFT LIBERTA"}
-                    </h2>
 
-                    {!currentTeam && (
-                        <div className="empty-state">
-                            <p className="empty-title">⚽ Pronto pra começar o draft?</p>
-                            <p className="empty-subtitle">
-                                Sorteia um time e monta teu elenco histórico da Libertadores.
-                            </p>
-                        </div>
+                    {gamePhase === "draft" && (
+
+                        <>
+
+                            <h2 className="panel-title">
+                                {selectedPlayers.length === 11
+                                    ? "SEU ELENCO"
+                                    : currentTeam
+                                        ? currentTeam.name
+                                        : "DRAFT LIBERTA"}
+                            </h2>
+
+                            {!currentTeam && (
+                                <div className="empty-state">
+                                    <p className="empty-title">⚽ Pronto pra começar o draft?</p>
+                                    <p className="empty-subtitle">
+                                        Sorteia um time e monta teu elenco histórico da Libertadores.
+                                    </p>
+                                </div>
+                            )}
+
+                            {currentTeam && selectedPlayers.length < 11 && (
+                                <ul className="list">
+                                    {currentTeam.players.map((player) => {
+
+                                        const playerWithTeam = {
+                                            ...player,
+                                            teamId: currentTeam.id
+                                        };
+
+                                        return (
+                                            <li
+                                                key={`${currentTeam.id}-${player.name}`}
+                                                className={`item
+                                                ${jogadorSelecionado(playerWithTeam) ? "selected" : ""}
+                                                ${pendingPlayer?.name === player.name ? "pending" : ""}
+                                                ${draftLocked ? "locked-item" : ""}
+                                                `}
+                                                onClick={() => {
+                                                    if (!draftLocked) {
+                                                        selecionarJogador(playerWithTeam);
+                                                    }
+                                                }}
+                                            >
+                                                {player.name} - {player.overall}
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            )}
+
+                            {selectedPlayers.length === 11 && (
+                                <div className="team-summary">
+                                    <h3>🏆 ELENCO COMPLETO</h3>
+                                    <ul className="summary-list">
+                                        {elencoOrdenado.map((player) => (
+                                            <li key={`${player.teamId}-${player.name}`}>
+                                                {player.name} - {player.overall}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <p>
+                                        NOTA: {calcularOverall()}
+                                    </p>
+                                </div>
+                            )}
+
+                            {selectedPlayers.length < 11 ? (
+                                <button
+                                    className="button-draft"
+                                    onClick={sortearTme}
+                                > SORTEAR TIME
+                                </button>
+                            ) : (
+                                <button
+                                    className="button-draft"
+                                    onClick={iniciarLibertadores}
+                                > INICIAR LIBERTADORES
+                                </button>
+                            )}
+                        </>
                     )}
 
-                    {currentTeam && selectedPlayers.length < 11 && (
-                        <ul className="list">
-                            {currentTeam.players.map((player) => (
-                                <li
-                                    key={player.name}
-                                    className={`item 
-                                    ${jogadorSelecionado(player) ? "selected" : ""} 
-                                    ${pendingPlayer?.name === player.name ? "pending" : ""} 
-                                    ${draftLocked ? "locked-item" : ""}
-                                    `}
-                                    onClick={() => {
-                                        if (!draftLocked) {
-                                            selecionarJogador(player);
-                                        }
-                                    }}
-                                >
-                                    {player.name} - {player.overall}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+                    {gamePhase === "groups" && (
+                        <>
+                            {drawingGroup ? (
+                                <>
+                                    <h2 className="panel-title">
+                                        SORTEANDO GRUPO...
+                                    </h2>
 
-                    {selectedPlayers.length === 11 && (
-                        <div className="team-summary">
-                            <h3>🏆 ELENCO COMPLETO</h3>
-                            <ul className="summary-list">
-                                {selectedPlayers.map((player) => (
-                                    <li key={player.name}>
-                                        {player.position} - {player.name} - {player.overall}
-                                    </li>
-                                ))}
-                            </ul>
-                            <p>
-                                Overall Médio: {calcularOverall()}
-                            </p>
-                        </div>
-                    )}
+                                    <p className="drawing-p">🎱</p>
 
-                    <button
-                        className="button-draft"
-                        onClick={sortearTme}
-                    >
-                        {selectedPlayers.length === 11
-                            ? "SIMULAR PARTIDA"
-                            : "SORTEAR TIME"}
-                    </button>
+                                    <p className="drawing-p">Definindo adversários...</p>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 className="panel-title">
+                                        GRUPO A
+                                    </h2>
+
+                                    <ul className="summary-list">
+                                        {group.map((team) => (
+                                            <li key={team}>
+                                                {team}
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                    <button className="button-draft">
+                                        SIMULAR PARTIDA
+                                    </button>
+                                </>
+                            )}
+                        </>
+                    )}
 
                 </div>
+
             </div>
         </div>
     )

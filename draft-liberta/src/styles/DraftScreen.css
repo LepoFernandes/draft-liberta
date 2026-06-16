@@ -263,6 +263,10 @@
     margin-top: 10px;
 }
 
+.team-summary h3{
+    font-size: 30px;
+}
+
 .team-summary p {
     margin-top: 50px;
     font-size: 30px;
@@ -275,6 +279,13 @@
 
     font-size: 22px;
     opacity: 0.9;
+}
+
+.summary-list li {
+    padding: 5px;
+    background: rgba(252, 246, 217, 0.05);
+    border: 1px solid rgba(221, 186, 125, 0.15);
+    border-radius: 5px;
 }
 
 .player-list h2 {
@@ -304,6 +315,13 @@
 
 .field.locked {
     filter: grayscale(0.3);
+}
+
+.drawing-p{
+    margin-top: 20px;
+    font-size: 26px;
+    transition: all 0.3s ease;
+    animation: pulse 1.5s infinite;
 }
 
 @media (max-width: 900px) {
@@ -337,4 +355,12 @@
         width: 100px;
         height: 100px;
     }
+}
+
+
+
+@keyframes pulse {
+    0% { opacity: 0.6; transform: translateY(0px); }
+    50% { opacity: 1; transform: translateY(-2px); }
+    100% { opacity: 0.6; transform: translateY(0px); }
 }
