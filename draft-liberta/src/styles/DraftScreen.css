@@ -324,10 +324,61 @@
     animation: pulse 1.5s infinite;
 }
 
+/*ESTILOS PRA PARTIDA*/
+
+.match-mode .pos{
+    opacity: 0;
+    pointer-events: none;
+}
+
+.match-mode .pos-name{
+    display: none;
+}
+
+.match-mode .pos-overall{
+    display: none;
+}
+
+.match-panel {
+    background: transparent;
+    border: none;
+    backdrop-filter: none;
+}
+
+.match-mode{
+    position: relative;
+    max-width: 900px;
+    height: 80vh;
+}
+
+.match-overlay{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+}
+
+.match-overlay h1{
+    font-size: 70px;
+}
+
+.match-layout {
+    grid-template-columns: 1fr;
+}
+
+.match-events {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
 @media (max-width: 900px) {
     
     .field {
-        height: 420px;
+        height: 70vh;
         max-width: 100%;
     }
     .draft-content {

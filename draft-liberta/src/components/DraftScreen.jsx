@@ -10,10 +10,19 @@ export default function DraftScreen() {
     const [rolling, setRolling] = useState(false);
     const [usedTeams, setUsedTeams] = useState(() => new Set());
     const [draftLocked, setDraftLocked] = useState(false);
-    const [gamePhase, setGamePhase] = useState("draft")
-    const [group, setGroup] = useState([])
-    const [drawingGroup, setDrawingGroup] = useState(false)
-
+    const [gamePhase, setGamePhase] = useState("draft");
+    const [group, setGroup] = useState([]);
+    const [drawingGroup, setDrawingGroup] = useState(false);
+    const [currentMatch, setCurrentMatch] = useState(null);
+    const [matchMinute, setMatchMinute] = useState("0'")
+    const [matchStarted, setMatchStarted] = useState(false)
+    const [acrescimos1, setAcrescimos1] = useState(0);
+    const [acrescimos2, setAcrescimos2] = useState(0);
+    const [matchFinished, setMatchFinished] = useState(false)
+    const [homeGoals, setHomeGoals] = useState(0)
+    const [awayGoals, setAwayGoals] = useState(0)
+    const [matchEvents, setMatchEvents] = useState([])
+    const [usedMinutes, setUsedMinutes] = useState([]);
 
     const positionGroups = {
         CB1: ["CB1", "CB2"],
@@ -175,6 +184,132 @@ export default function DraftScreen() {
 
     }
 
+    function iniciarPartida() {
+
+        setHomeGoals(0);
+        setAwayGoals(0);
+        setMatchEvents([]);
+        setUsedMinutes([]);
+
+        if (matchStarted) return;
+
+        setMatchStarted(true)
+
+        const acr1 = Math.floor(Math.random() * 4) + 1
+        const acr2 = Math.floor(Math.random() * 6) + 1
+
+        setAcrescimos1(acr1)
+        setAcrescimos2(acr2)
+
+        let minuto = 0
+
+        const interval = setInterval(() => {
+            minuto++
+
+            const chanceGol = Math.random()
+
+            if (chanceGol < 0.05 &&
+                !usedMinutes.includes(minuto)) {
+
+                const golSeuTime = Math.random() < 0.5;
+
+                if (golSeuTime) {
+
+                    setHomeGoals(prev => prev + 1);
+
+                    setMatchEvents(prev => [
+                        ...prev,
+                        `${minuto}' ⚽ Gol do Seu Time`
+                    ]);
+
+                    setUsedMinutes(prev => [...prev, minuto])
+
+                } else {
+                    setAwayGoals(prev => prev + 1);
+
+                    setMatchEvents(prev => [
+                        ...prev,
+                        `${minuto}' ⚽ Gol do ${currentMatch}`
+                    ]);
+
+                    setUsedMinutes(prev => [...prev, minuto])
+                }
+            }
+
+            //PRIMEIRO TEMPO
+            if (minuto <= 45) {
+                setMatchMinute(`${minuto}'`)
+            }
+            //ACRESCIMOS DO PRIMEIRO TEMPO
+            else if (minuto <= 45 + acr1) {
+                setMatchMinute(`45+${minuto - 45}'`)
+            }
+
+            //INTERVALO
+
+            else if (minuto === 46 + acr1) {
+                clearInterval(interval)
+
+                setTimeout(() => {
+                    let segundoTempo = 46
+
+                    const secondHalfInterval = setInterval(() => {
+
+                        const chanceGol = Math.random()
+
+                        if (chanceGol < 0.05 &&
+                            !usedMinutes.includes(segundoTempo)) {
+
+                            const golSeuTime = Math.random() < 0.5;
+
+                            if (golSeuTime) {
+
+                                setHomeGoals(prev => prev + 1);
+
+                                setMatchEvents(prev => [
+                                    ...prev,
+                                    `${segundoTempo}' ⚽ Gol do Seu Time`
+                                ]);
+
+                                setUsedMinutes(prev => [...prev, segundoTempo])
+
+                            } else {
+                                setAwayGoals(prev => prev + 1);
+
+                                setMatchEvents(prev => [
+                                    ...prev,
+                                    `${segundoTempo}' ⚽ Gol do ${currentMatch}`
+                                ]);
+
+                                setUsedMinutes(prev => [...prev, segundoTempo])
+                            }
+                        }
+
+                        //SEGUNDO TEMPO NORMAL
+                        if (segundoTempo <= 90) {
+                            setMatchMinute(`${segundoTempo}'`)
+                        }
+
+                        else if (segundoTempo <= 90 + acr2) {
+                            setMatchMinute(`90+${segundoTempo - 90}'`)
+                        }
+
+                        else {
+                            clearInterval(secondHalfInterval)
+                            setMatchMinute("FIM DE JOGO");
+                            setMatchFinished(true)
+                        }
+
+                        segundoTempo++;
+
+                    }, 300)
+
+                }, 2500)
+            }
+
+        }, 300)
+    }
+
     return (
         <div className="draft-screen">
             <h1>Draft Liberta</h1>
@@ -188,8 +323,11 @@ export default function DraftScreen() {
                 </p>
             )}
 
-            <div className="draft-content">
-                <div className={`field ${draftLocked ? "locked" : ""}`}>
+            <div className={`draft-content ${gamePhase === "match" ? "match-layout" : ""}`}>
+                <div className={`field 
+                    ${draftLocked ? "locked" : ""}
+                    ${gamePhase === "match" ? "match-mode" : ""}
+                    `}>
                     <div className="line">
                         <div
                             className={`pos ${isActive("GK") ? "active-pos" : ""}`}
@@ -331,10 +469,58 @@ export default function DraftScreen() {
                             </div>
                         </div>
                     </div>
+
+                    {gamePhase === "match" && (
+                        <div className="match-overlay">
+                            <h2 className="panel-title">
+                                SEU TIME X {currentMatch}
+                            </h2>
+
+                            <h1>{homeGoals} x {awayGoals}</h1>
+
+                            <p>
+                                {matchMinute}
+                            </p>
+
+                            <div className="match-events">
+                                {matchEvents.slice(-5).map((event, index) => (
+                                    <p key={index}>{event}</p>
+                                ))}
+                            </div>
+
+                            {!matchStarted && (
+                                <p>
+                                    Partida ainda não iniciada
+                                </p>
+                            )}
+
+                            <button
+                                className="button-draft"
+                                disabled={matchStarted && !matchFinished}
+                                onClick={() => {
+                                    if (!matchStarted) {
+                                        iniciarPartida();
+                                    } else if (matchFinished) {
+                                        // próxima partida
+                                    }
+                                }}
+                            >
+                                {!matchStarted
+                                    ? "INICIAR PARTIDA"
+                                    : matchFinished
+                                        ? "PRÓXIMA PARTIDA"
+                                        : "PARTIDA EM ANDAMENTO"}
+                            </button>
+                        </div>
+                    )}
+
                 </div>
 
-                <div className={`player-list ${rolling ? "rolling" : ""} ${draftLocked ? "locked" : ""}`}>
-
+                <div className={`player-list
+                    ${rolling ? "rolling" : ""} 
+                    ${draftLocked ? "locked" : ""}
+                    ${gamePhase === "match" ? "match-panel" : ""}
+                    `}>
                     {gamePhase === "draft" && (
 
                         <>
@@ -444,7 +630,14 @@ export default function DraftScreen() {
                                         ))}
                                     </ul>
 
-                                    <button className="button-draft">
+                                    <button className="button-draft"
+                                        onClick={() => {
+                                            const adversario = group[1]
+
+                                            setCurrentMatch(adversario);
+                                            setGamePhase("match")
+                                        }}
+                                    >
                                         SIMULAR PARTIDA
                                     </button>
                                 </>
