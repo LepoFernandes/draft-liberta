@@ -419,7 +419,7 @@
 .penalty-box {
     position: absolute;
     z-index: 999;
-    background: rgba(0,0,0,0.9);
+    background: rgba(0, 0, 0, 0.9);
 }
 
 @media (max-width: 900px) {
@@ -448,11 +448,32 @@
 
     .line {
         flex-wrap: wrap;
+        gap: 2px;
     }
 
     .field::before {
         width: 100px;
         height: 100px;
+    }
+
+    .pos {
+        width: 38px;
+        height: 38px;
+        font-size: 9px;
+    }
+
+    .pos-overall {
+        font-size: 10px;
+    }
+
+    .pos-name {
+        font-size: 7px;
+    }
+
+
+    .field {
+        transform: scale(0.9);
+        transform-origin: top center;
     }
 }
 
