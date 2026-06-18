@@ -441,11 +441,6 @@ export default function DraftScreen() {
 
                             setGamePhase(prev => prev);
 
-                            atualizarTabelaPartida(
-                                golsSeuTime,
-                                golsAdversario
-                            );
-
                             setMatchHistory(prev => [
 
                                 ...prev,
