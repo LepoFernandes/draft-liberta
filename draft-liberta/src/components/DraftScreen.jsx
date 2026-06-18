@@ -14,16 +14,18 @@ export default function DraftScreen() {
     const [group, setGroup] = useState([]);
     const [drawingGroup, setDrawingGroup] = useState(false);
     const [currentMatch, setCurrentMatch] = useState(null);
-    const [matchMinute, setMatchMinute] = useState("0'")
-    const [matchStarted, setMatchStarted] = useState(false)
+    const [matchMinute, setMatchMinute] = useState("0'");
+    const [matchStarted, setMatchStarted] = useState(false);
     const [acrescimos1, setAcrescimos1] = useState(0);
     const [acrescimos2, setAcrescimos2] = useState(0);
-    const [matchFinished, setMatchFinished] = useState(false)
-    const [homeGoals, setHomeGoals] = useState(0)
-    const [awayGoals, setAwayGoals] = useState(0)
-    const [matchEvents, setMatchEvents] = useState([])
+    const [matchFinished, setMatchFinished] = useState(false);
+    const [homeGoals, setHomeGoals] = useState(0);
+    const [awayGoals, setAwayGoals] = useState(0);
+    const [matchEvents, setMatchEvents] = useState([]);
     const [usedMinutes, setUsedMinutes] = useState([]);
-    const [matchIndex, setMatchIndex] = useState(1)
+    const [matchIndex, setMatchIndex] = useState(1);
+    const [groupTable, setGroupTable] = useState([]);
+    const [tableCompleted, setTableCompleted] = useState(false);
 
     const positionGroups = {
         CB1: ["CB1", "CB2"],
@@ -170,14 +172,39 @@ export default function DraftScreen() {
         const shuffled = [...teams].sort(() =>
             Math.random() - 0.5)
 
-        const grupo = shuffled.slice(0, 3).map(team => team.name)
-
+        const grupo = shuffled.slice(0, 3);
         setTimeout(() => {
 
             setGroup([
                 "Seu Time",
                 ...grupo
             ])
+
+            setGroupTable([{
+                team: "Seu Time",
+                pts: 0,
+                pj: 0,
+                v: 0,
+                e: 0,
+                d: 0,
+                gp: 0,
+                gc: 0,
+                sg: 0
+            },
+
+            ...grupo.map(team => ({
+                team: team.name,
+                pts: 0,
+                pj: 0,
+                v: 0,
+                e: 0,
+                d: 0,
+                gp: 0,
+                gc: 0,
+                sg: 0
+            }))
+
+            ]);
 
             setCurrentMatch(grupo[0]);
             setMatchIndex(1);
@@ -195,6 +222,8 @@ export default function DraftScreen() {
         setMatchEvents([]);
         setUsedMinutes([]);
 
+
+
         if (matchStarted) return;
 
         setMatchStarted(true)
@@ -206,6 +235,8 @@ export default function DraftScreen() {
         setAcrescimos2(acr2)
 
         let minuto = 0
+        let golsSeuTime = 0
+        let golsAdversario = 0
 
         const interval = setInterval(() => {
             minuto++
@@ -219,6 +250,7 @@ export default function DraftScreen() {
 
                 if (golSeuTime) {
 
+                    golsSeuTime++;
                     setHomeGoals(prev => prev + 1);
 
                     const minutoEvento =
@@ -226,14 +258,23 @@ export default function DraftScreen() {
                             ? `45+${minuto - 45}'`
                             : `${minuto}'`;
 
+                    const autorGol =
+                        selectedPlayers[
+                        Math.floor(
+                            Math.random() *
+                            selectedPlayers.length
+                        )
+                        ];
+
                     setMatchEvents(prev => [
                         ...prev,
-                        `${minutoEvento} ⚽ Gol do Seu Time`
+                        `${minutoEvento} ⚽ ${autorGol.name}`
                     ]);
 
                     setUsedMinutes(prev => [...prev, minuto])
 
                 } else {
+                    golsAdversario++;
                     setAwayGoals(prev => prev + 1);
 
                     const minutoEvento =
@@ -241,9 +282,17 @@ export default function DraftScreen() {
                             ? `45+${minuto - 45}'`
                             : `${minuto}'`;
 
+                    const autorGol =
+                        currentMatch.players[
+                        Math.floor(
+                            Math.random() *
+                            currentMatch.players.length
+                        )
+                        ];
+
                     setMatchEvents(prev => [
                         ...prev,
-                        `${minutoEvento} ⚽ Gol do ${currentMatch}`
+                        `${minutoEvento} ⚽ ${autorGol.name}`
                     ]);
 
                     setUsedMinutes(prev => [...prev, minuto])
@@ -278,6 +327,7 @@ export default function DraftScreen() {
 
                             if (golSeuTime) {
 
+                                golsSeuTime++;
                                 setHomeGoals(prev => prev + 1);
 
                                 const minutoEvento =
@@ -285,14 +335,23 @@ export default function DraftScreen() {
                                         ? `90+${segundoTempo - 90}'`
                                         : `${segundoTempo}'`;
 
+                                const autorGol =
+                                    selectedPlayers[
+                                    Math.floor(
+                                        Math.random() *
+                                        selectedPlayers.length
+                                    )
+                                    ];
+
                                 setMatchEvents(prev => [
                                     ...prev,
-                                    `${minutoEvento} ⚽ Gol do Seu Time`
+                                    `${minutoEvento} ⚽ ${autorGol.name}`
                                 ]);
 
                                 setUsedMinutes(prev => [...prev, segundoTempo])
 
                             } else {
+                                golsAdversario++;
                                 setAwayGoals(prev => prev + 1);
 
                                 const minutoEvento =
@@ -300,9 +359,17 @@ export default function DraftScreen() {
                                         ? `90+${segundoTempo - 90}'`
                                         : `${segundoTempo}'`;
 
+                                const autorGol =
+                                    currentMatch.players[
+                                    Math.floor(
+                                        Math.random() *
+                                        currentMatch.players.length
+                                    )
+                                    ];
+
                                 setMatchEvents(prev => [
                                     ...prev,
-                                    `${minutoEvento} ⚽ Gol do ${currentMatch}`
+                                    `${minutoEvento} ⚽ ${autorGol.name}`
                                 ]);
 
                                 setUsedMinutes(prev => [...prev, segundoTempo])
@@ -322,6 +389,11 @@ export default function DraftScreen() {
                             clearInterval(secondHalfInterval)
                             setMatchMinute("FIM DE JOGO");
                             setMatchFinished(true)
+
+                            atualizarTabelaPartida(
+                                golsSeuTime,
+                                golsAdversario
+                            );
                         }
 
                         segundoTempo++;
@@ -358,6 +430,131 @@ export default function DraftScreen() {
         setMatchEvents([]);
         setUsedMinutes([]);
     }
+
+    function atualizarTabelaPartida(golsSeuTime, golsAdversario) {
+
+        setGroupTable(prev =>
+            prev.map(team => {
+
+                // SEU TIME
+                if (team.team === "Seu Time") {
+
+                    const novoTime = {
+                        ...team,
+                        pj: team.pj + 1,
+                        gp: team.gp + golsSeuTime,
+                        gc: team.gc + golsAdversario,
+                    };
+
+                    novoTime.sg = novoTime.gp - novoTime.gc;
+
+                    if (golsSeuTime > golsAdversario) {
+                        novoTime.pts += 3;
+                        novoTime.v += 1;
+                    } else if (golsSeuTime === golsAdversario) {
+                        novoTime.pts += 1;
+                        novoTime.e += 1;
+                    } else {
+                        novoTime.d += 1;
+                    }
+
+                    return novoTime;
+                }
+
+                // ADVERSÁRIO ATUAL
+                if (team.team === currentMatch.name) {
+
+                    const novoTime = {
+                        ...team,
+                        pj: team.pj + 1,
+                        gp: team.gp + golsAdversario,
+                        gc: team.gc + golsSeuTime,
+                    };
+
+                    novoTime.sg = novoTime.gp - novoTime.gc;
+
+                    if (golsAdversario > golsSeuTime) {
+                        novoTime.pts += 3;
+                        novoTime.v += 1;
+                    } else if (golsAdversario === golsSeuTime) {
+                        novoTime.pts += 1;
+                        novoTime.e += 1;
+                    } else {
+                        novoTime.d += 1;
+                    }
+
+                    return novoTime;
+                }
+
+                return team;
+            })
+        );
+    }
+
+
+    function completarTabela() {
+
+        if (tableCompleted) return;
+
+        setTableCompleted(true);
+
+        setGroupTable(prev =>
+            prev.map(team => {
+
+                if (team.team === "Seu Time") {
+                    return team;
+                }
+
+                const jogosRestantes = 3 - team.pj;
+
+                let novoTime = { ...team };
+
+                for (let i = 0; i < jogosRestantes; i++) {
+
+                    const resultado = Math.floor(Math.random() * 3);
+
+                    const golsFeitos = Math.floor(Math.random() * 4);
+                    const golsSofridos = Math.floor(Math.random() * 4);
+
+                    novoTime.gp += golsFeitos;
+                    novoTime.gc += golsSofridos;
+
+                    novoTime.pj += 1;
+
+                    if (resultado === 0) {
+                        novoTime.pts += 3;
+                        novoTime.v += 1;
+                    }
+                    else if (resultado === 1) {
+                        novoTime.pts += 1;
+                        novoTime.e += 1;
+                    }
+                    else {
+                        novoTime.d += 1;
+                    }
+                }
+
+                return {
+                    ...novoTime,
+                    sg: novoTime.gp - novoTime.gc
+                };
+            })
+        );
+    }
+
+
+    const tabelaOrdenada = [...groupTable].sort((a, b) => {
+
+        if (b.pts !== a.pts) {
+            return b.pts - a.pts;
+        }
+
+        if (b.sg !== a.sg) {
+            return b.sg - a.sg;
+        }
+
+        return b.gp - a.gp;
+    });
 
     return (
         <div className="draft-screen">
@@ -522,7 +719,7 @@ export default function DraftScreen() {
                     {gamePhase === "match" && (
                         <div className="match-overlay">
                             <h2 className="panel-title">
-                                SEU TIME X {currentMatch}
+                                SEU TIME X {currentMatch?.name}
                             </h2>
 
                             <h1>{homeGoals} x {awayGoals}</h1>
@@ -550,15 +747,26 @@ export default function DraftScreen() {
                                     if (!matchStarted) {
                                         iniciarPartida();
                                     } else if (matchFinished) {
-                                        proximaPartida();
+
+                                        if (matchIndex > 2) {
+                                            completarTabela();
+                                            setGamePhase("table");
+                                        } else {
+                                            proximaPartida();
+                                        }
+
                                     }
                                 }}
                             >
-                                {!matchStarted
-                                    ? "INICIAR PARTIDA"
-                                    : matchFinished
-                                        ? "PRÓXIMA PARTIDA"
-                                        : "PARTIDA EM ANDAMENTO"}
+                                {
+                                    !matchStarted
+                                        ? "INICIAR PARTIDA"
+                                        : matchFinished
+                                            ? matchIndex > 2
+                                                ? "VER CLASSIFICAÇÃO"
+                                                : "PRÓXIMA PARTIDA"
+                                            : "PARTIDA EM ANDAMENTO"
+                                }
                             </button>
                         </div>
                     )}
@@ -624,6 +832,7 @@ export default function DraftScreen() {
                             {selectedPlayers.length === 11 && (
                                 <div className="team-summary">
                                     <h3>🏆 ELENCO COMPLETO</h3>
+
                                     <ul className="summary-list">
                                         {elencoOrdenado.map((player) => (
                                             <li key={`${player.teamId}-${player.name}`}>
@@ -631,6 +840,7 @@ export default function DraftScreen() {
                                             </li>
                                         ))}
                                     </ul>
+
                                     <p>
                                         NOTA: {calcularOverall()}
                                     </p>
@@ -673,8 +883,8 @@ export default function DraftScreen() {
 
                                     <ul className="summary-list">
                                         {group.map((team) => (
-                                            <li key={team}>
-                                                {team}
+                                            <li key={typeof team === "string" ? team : team.name}>
+                                                {typeof team === "string" ? team : team.name}
                                             </li>
                                         ))}
                                     </ul>
@@ -688,6 +898,46 @@ export default function DraftScreen() {
                                     </button>
                                 </>
                             )}
+                        </>
+                    )}
+
+                    {gamePhase === "table" && (
+                        <>
+                            <h2 className="panel-title">
+                                CLASSIFICAÇÃO
+                            </h2>
+
+                            <table className="group-table">
+                                <thead>
+                                    <tr>
+                                        <th>TIME</th>
+                                        <th>P</th>
+                                        <th>J</th>
+                                        <th>V</th>
+                                        <th>E</th>
+                                        <th>D</th>
+                                        <th>GP</th>
+                                        <th>GC</th>
+                                        <th>SG</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {tabelaOrdenada.map(team => (
+                                        <tr key={team.team}>
+                                            <td>{team.team}</td>
+                                            <td>{team.pts}</td>
+                                            <td>{team.pj}</td>
+                                            <td>{team.v}</td>
+                                            <td>{team.e}</td>
+                                            <td>{team.d}</td>
+                                            <td>{team.gp}</td>
+                                            <td>{team.gc}</td>
+                                            <td>{team.sg}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </>
                     )}
 
