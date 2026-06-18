@@ -23,6 +23,7 @@ export default function DraftScreen() {
     const [awayGoals, setAwayGoals] = useState(0)
     const [matchEvents, setMatchEvents] = useState([])
     const [usedMinutes, setUsedMinutes] = useState([]);
+    const [matchIndex, setMatchIndex] = useState(1)
 
     const positionGroups = {
         CB1: ["CB1", "CB2"],
@@ -178,6 +179,9 @@ export default function DraftScreen() {
                 ...grupo
             ])
 
+            setCurrentMatch(grupo[0]);
+            setMatchIndex(1);
+
             setDrawingGroup(false)
 
         }, 2500)
@@ -208,7 +212,7 @@ export default function DraftScreen() {
 
             const chanceGol = Math.random()
 
-            if (chanceGol < 0.05 &&
+            if (chanceGol < 0.03 &&
                 !usedMinutes.includes(minuto)) {
 
                 const golSeuTime = Math.random() < 0.5;
@@ -217,9 +221,14 @@ export default function DraftScreen() {
 
                     setHomeGoals(prev => prev + 1);
 
+                    const minutoEvento =
+                        minuto > 45
+                            ? `45+${minuto - 45}'`
+                            : `${minuto}'`;
+
                     setMatchEvents(prev => [
                         ...prev,
-                        `${minuto}' ⚽ Gol do Seu Time`
+                        `${minutoEvento} ⚽ Gol do Seu Time`
                     ]);
 
                     setUsedMinutes(prev => [...prev, minuto])
@@ -227,9 +236,14 @@ export default function DraftScreen() {
                 } else {
                     setAwayGoals(prev => prev + 1);
 
+                    const minutoEvento =
+                        minuto > 45
+                            ? `45+${minuto - 45}'`
+                            : `${minuto}'`;
+
                     setMatchEvents(prev => [
                         ...prev,
-                        `${minuto}' ⚽ Gol do ${currentMatch}`
+                        `${minutoEvento} ⚽ Gol do ${currentMatch}`
                     ]);
 
                     setUsedMinutes(prev => [...prev, minuto])
@@ -257,7 +271,7 @@ export default function DraftScreen() {
 
                         const chanceGol = Math.random()
 
-                        if (chanceGol < 0.05 &&
+                        if (chanceGol < 0.03 &&
                             !usedMinutes.includes(segundoTempo)) {
 
                             const golSeuTime = Math.random() < 0.5;
@@ -266,9 +280,14 @@ export default function DraftScreen() {
 
                                 setHomeGoals(prev => prev + 1);
 
+                                const minutoEvento =
+                                    segundoTempo > 90
+                                        ? `90+${segundoTempo - 90}'`
+                                        : `${segundoTempo}'`;
+
                                 setMatchEvents(prev => [
                                     ...prev,
-                                    `${segundoTempo}' ⚽ Gol do Seu Time`
+                                    `${minutoEvento} ⚽ Gol do Seu Time`
                                 ]);
 
                                 setUsedMinutes(prev => [...prev, segundoTempo])
@@ -276,9 +295,14 @@ export default function DraftScreen() {
                             } else {
                                 setAwayGoals(prev => prev + 1);
 
+                                const minutoEvento =
+                                    segundoTempo > 90
+                                        ? `90+${segundoTempo - 90}'`
+                                        : `${segundoTempo}'`;
+
                                 setMatchEvents(prev => [
                                     ...prev,
-                                    `${segundoTempo}' ⚽ Gol do ${currentMatch}`
+                                    `${minutoEvento} ⚽ Gol do ${currentMatch}`
                                 ]);
 
                                 setUsedMinutes(prev => [...prev, segundoTempo])
@@ -308,6 +332,31 @@ export default function DraftScreen() {
             }
 
         }, 300)
+    }
+
+    function proximaPartida() {
+
+        const novoIndex = matchIndex + 1;
+
+        if (novoIndex > 3) {
+            setGamePhase("table");
+            return;
+        }
+
+        setMatchIndex(novoIndex);
+
+        setCurrentMatch(group[novoIndex]);
+
+        setMatchStarted(false);
+        setMatchFinished(false);
+
+        setMatchMinute("0'");
+
+        setHomeGoals(0);
+        setAwayGoals(0);
+
+        setMatchEvents([]);
+        setUsedMinutes([]);
     }
 
     return (
@@ -501,7 +550,7 @@ export default function DraftScreen() {
                                     if (!matchStarted) {
                                         iniciarPartida();
                                     } else if (matchFinished) {
-                                        // próxima partida
+                                        proximaPartida();
                                     }
                                 }}
                             >
@@ -632,9 +681,6 @@ export default function DraftScreen() {
 
                                     <button className="button-draft"
                                         onClick={() => {
-                                            const adversario = group[1]
-
-                                            setCurrentMatch(adversario);
                                             setGamePhase("match")
                                         }}
                                     >
