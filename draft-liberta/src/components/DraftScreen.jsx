@@ -393,7 +393,7 @@ export default function DraftScreen() {
 
                         const chanceFinal = knockoutPhase
                             ? chanceReal
-                            : chanceReal * 1.5;
+                            : chanceReal * 1.2;
 
                         const chanceEvento = Math.random();
 
@@ -766,76 +766,52 @@ export default function DraftScreen() {
         }, 1200);
     }
 
-    function iniciarPenaltis() {
-        if (gamePhase !== "match") return;
-        if (penaltyRunningRef.current) return;
-        penaltyRunningRef.current = true;
 
-        setMatchStarted(false);
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    async function iniciarPenaltis() {
+        if (gamePhase !== "match" || penaltyRunningRef.current) return;
+
+        penaltyRunningRef.current = true;
         setPenaltyMode(true);
         setPenaltyEvents([]);
         setPenaltyHome(0);
         setPenaltyAway(0);
-        setGamePhase("match");
 
         const cobradoresSeuTime = selectedPlayers.filter(p => p.position !== "GK");
         const cobradoresAdversario = currentMatch.players.filter(p => p.position !== "GK");
 
-        let index = 0;
         let home = 0;
         let away = 0;
 
 
-        if (matchIntervalRef.current) clearInterval(matchIntervalRef.current);
+        for (let i = 0; i < 10; i++) {
+            await delay(1500);
 
-        matchIntervalRef.current = setInterval(() => {
+            const isHome = i % 2 === 0;
+            const index = Math.floor(i / 2);
+            const player = isHome ? cobradoresSeuTime[index] : cobradoresAdversario[index];
+            const gol = Math.random() < 0.78;
 
-            const isMorteSubita = index >= 5;
-
-
-            const homePlayer = cobradoresSeuTime[index % cobradoresSeuTime.length];
-            const awayPlayer = cobradoresAdversario[index % cobradoresAdversario.length];
-
-            const homeGoal = Math.random() < 0.78;
-            const awayGoal = Math.random() < 0.78;
-
-            if (homePlayer) {
-                setPenaltyEvents(prev => [
-                    ...prev,
-                    homeGoal ? `⚽ ${homePlayer.name}` : `❌ ${homePlayer.name}`
-                ]);
-                if (homeGoal) home++;
-            }
-
-            if (awayPlayer) {
-                setPenaltyEvents(prev => [
-                    ...prev,
-                    awayGoal ? `⚽ ${awayPlayer.name}` : `❌ ${awayPlayer.name}`
-                ]);
-                if (awayGoal) away++;
-            }
-
-            setPenaltyHome(home);
-            setPenaltyAway(away);
-
-            index++;
-
-
-            if (!isMorteSubita) {
-
-                const remaining = 5 - index;
-
-
-                if (home > away + remaining || away > home + remaining) {
-                    finalizarPenaltis(home, away);
-                }
+            if (isHome) {
+                setPenaltyEvents(prev => [...prev, { name: player.name, gol, time: 'home' }]);
+                if (gol) home++;
+                setPenaltyHome(home);
             } else {
-
-                if (home !== away) {
-                    finalizarPenaltis(home, away);
-                }
+                setPenaltyEvents(prev => [...prev, { name: player.name, gol, time: 'away' }]);
+                if (gol) away++;
+                setPenaltyAway(away);
             }
-        }, 1200);
+
+
+            const remaining = 5 - (isHome ? index + 1 : index);
+            if (i >= 9 || (i >= 7 && Math.abs(home - away) > remaining)) {
+                if (home !== away) break;
+            }
+        }
+
+        await delay(1000);
+        finalizarPenaltis(home, away);
     }
 
     const tabelaOrdenada = [...groupTable].sort((a, b) => {
@@ -1014,48 +990,47 @@ export default function DraftScreen() {
                     {gamePhase === "match" && (
                         <div className="match-overlay">
                             <h2 className="panel-title">
-                                {knockoutPhase
-                                    ? `${knockoutPhase.toUpperCase()}`
-                                    : "FASE DE GRUPOS"}
+                                {knockoutPhase ? `${knockoutPhase.toUpperCase()}` : "FASE DE GRUPOS"}
                             </h2>
 
-                            <h3>
-                                SEU TIME X {currentMatch?.name}
-                            </h3>
+                            <h3>SEU TIME X {currentMatch?.name}</h3>
 
-                            <h1>{homeGoals} x {awayGoals}</h1>
+                            <div className="score-board">
+                                {penaltyMode ? (
+                                    <>
+                                        <h1 className="penalty-score">
+                                            <span className="my-team-color">{penaltyHome}</span>
+                                            <span className="separator"> - </span>
+                                            <span className="away-team-color">{penaltyAway}</span>
+                                        </h1>
+                                        <p>Disputa de Pênaltis</p>
+                                    </>
+                                ) : (
+                                    <h1>{homeGoals} x {awayGoals}</h1>
+                                )}
+                            </div>
 
-                            <p>
-                                {matchMinute}
-                            </p>
-
-                            {penaltyMode && (
-                                <div className="penalty-box">
-
-                                    <h3>PÊNALTIS</h3>
-
-                                    <h2>
-                                        {penaltyHome} x {penaltyAway}
-                                    </h2>
-
-                                    {penaltyEvents.map((event, index) => (
-                                        <p key={index}>
-                                            {event}
-                                        </p>
-                                    ))}
-
-                                </div>
-                            )}
+                            <p>{matchMinute}</p>
 
                             <div className="match-events">
-                                {matchEvents.slice(-5).map((event, index) => (
-                                    <p
-                                        key={index}
-                                        className={event.home ? "goal-home" : "goal-away"}
-                                    >
+
+                                {!penaltyMode && matchEvents.slice(-5).map((event, index) => (
+                                    <p key={index} className={event.home ? "goal-home" : "goal-away"}>
                                         {event.minute} ⚽ {event.player}
                                     </p>
                                 ))}
+
+
+                                {penaltyMode && penaltyEvents && (
+                                    <div className="penalty-events">
+                                        <h4>Registro dos Pênaltis:</h4>
+                                        {penaltyEvents.map((pe, idx) => (
+                                            <p key={idx} className={pe.gol ? "penalty-goal" : "penalty-miss"}>
+                                                {pe.name} {pe.gol ? "✅ Gol" : "❌ Perdeu"}
+                                            </p>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             {!matchStarted && !matchFinished && (

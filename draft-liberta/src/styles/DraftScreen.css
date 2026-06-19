@@ -416,10 +416,27 @@
     font-weight: bold;
 }
 
-.penalty-box {
-    position: absolute;
-    z-index: 999;
-    background: rgba(0, 0, 0, 0.9);
+.my-team-color {
+    color: limegreen;
+    
+    font-weight: bold;
+}
+
+.away-team-color {
+    color: tomato;
+   
+    font-weight: bold;
+}
+
+.penalty-score {
+    font-size: 2.5rem;
+    margin: 10px 0;
+}
+
+
+.penalty-event {
+    margin: 5px 0;
+    font-size: 0.9rem;
 }
 
 @media (max-width: 900px) {
