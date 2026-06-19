@@ -995,40 +995,47 @@ export default function DraftScreen() {
 
                             <h3>SEU TIME X {currentMatch?.name}</h3>
 
+                            
+                            <p className="match-minute">{matchMinute}</p>
+
                             <div className="score-board">
                                 {penaltyMode ? (
-                                    <>
-                                        <h1 className="penalty-score">
-                                            <span className="my-team-color">{penaltyHome}</span>
-                                            <span className="separator"> - </span>
-                                            <span className="away-team-color">{penaltyAway}</span>
-                                        </h1>
-                                        <p>Disputa de Pênaltis</p>
-                                    </>
+                                    <div className="side-by-side">
+                                        <div className="team-side">
+                                            <h1 className="my-team-color">{penaltyHome}</h1>
+                                            <div className="event-list">
+                                                {penaltyEvents.filter(e => e.time === 'home').map((pe, idx) => (
+                                                    <p key={idx} className="penalty-goal">✅ {pe.name}</p>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="team-side">
+                                            <h1 className="away-team-color">{penaltyAway}</h1>
+                                            <div className="event-list">
+                                                {penaltyEvents.filter(e => e.time === 'away').map((pe, idx) => (
+                                                    <p key={idx} className="penalty-miss">❌ {pe.name}</p>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
                                 ) : (
-                                    <h1>{homeGoals} x {awayGoals}</h1>
-                                )}
-                            </div>
-
-                            <p>{matchMinute}</p>
-
-                            <div className="match-events">
-
-                                {!penaltyMode && matchEvents.slice(-5).map((event, index) => (
-                                    <p key={index} className={event.home ? "goal-home" : "goal-away"}>
-                                        {event.minute} ⚽ {event.player}
-                                    </p>
-                                ))}
-
-
-                                {penaltyMode && penaltyEvents && (
-                                    <div className="penalty-events">
-                                        <h4>Registro dos Pênaltis:</h4>
-                                        {penaltyEvents.map((pe, idx) => (
-                                            <p key={idx} className={pe.gol ? "penalty-goal" : "penalty-miss"}>
-                                                {pe.name} {pe.gol ? "✅ Gol" : "❌ Perdeu"}
-                                            </p>
-                                        ))}
+                                    <div className="side-by-side">
+                                        <div className="team-side">
+                                            <h1>{homeGoals}</h1>
+                                            <div className="event-list">
+                                                {matchEvents.filter(e => e.home).slice(-5).map((e, i) => (
+                                                    <p key={i}>⚽ {e.player} <small>{e.minute}'</small></p>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="team-side">
+                                            <h1>{awayGoals}</h1>
+                                            <div className="event-list">
+                                                {matchEvents.filter(e => !e.home).slice(-5).map((e, i) => (
+                                                    <p key={i}><small>{e.minute}'</small> ⚽ {e.player}</p>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -1045,41 +1052,31 @@ export default function DraftScreen() {
                                 onClick={() => {
                                     if (!matchStarted && !matchFinished) {
                                         iniciarPartida();
-                                    }
+                                    } else if (matchFinished) {
 
-                                    else if (matchFinished) {
+                                        if (knockoutPhase === "final" && (homeGoals > awayGoals || (penaltyMode && penaltyHome > penaltyAway))) {
+                                            setGamePhase("champion");
+                                            return;
+                                        }
+                                        if (knockoutPhase === "final" && (homeGoals < awayGoals || (penaltyMode && penaltyHome < penaltyAway))) {
+                                            setGamePhase("eliminated");
+                                        }
+
 
                                         if (knockoutPhase) {
-
-                                            if (homeGoals > awayGoals) {
+                                            if (homeGoals > awayGoals || (penaltyMode && penaltyHome > penaltyAway)) {
                                                 avancarMataMata();
-                                            }
-
-                                            else if (homeGoals < awayGoals) {
+                                            } else {
                                                 setGamePhase("eliminated");
                                             }
-
-                                            else {
-
-                                                setPenaltyMode(true);
-                                                iniciarPenaltis();
-
-                                            }
-
-                                        }
-                                        else {
-
+                                        } else {
                                             if (matchIndex > 2) {
                                                 completarTabela();
                                                 setGamePhase("table");
-                                            }
-
-                                            else {
+                                            } else {
                                                 proximaPartida();
                                             }
-
                                         }
-
                                     }
                                 }}
                             >
@@ -1273,31 +1270,29 @@ export default function DraftScreen() {
                         </>
                     )}
 
-                    {gamePhase === "champion" && (
-                        <div>
-                            <h1>🏆 CAMPEÃO DA LIBERTADORES 🏆</h1>
+                    {(gamePhase === "champion" || gamePhase === "eliminated") && (
+                        <div className="result-container">
+                            <h1 className="result-title">
+                                {gamePhase === "champion" ? "🏆 Você é o Campeão!" : "❌ Eliminado"}
+                            </h1>
 
-                            <h3>Campanha</h3>
-
-                            {matchHistory.map((m, i) => (
-                                <p key={i}>
-                                    {m.phase.toUpperCase()} — {m.home} {m.homeGoals} x {m.awayGoals} {m.away}
-                                </p>
-                            ))}
-                        </div>
-                    )}
-
-                    {gamePhase === "eliminated" && (
-                        <div>
-                            <p>Seu time foi eliminado da Libertadores.</p>
-
-                            <h3>Histórico de jogos</h3>
+                            <h3 style={{ borderBottom: '1px solid #444', paddingBottom: '10px' }}>
+                                Trajetória na Libertadores
+                            </h3>
 
                             {matchHistory.map((m, i) => (
-                                <p key={i}>
-                                    {m.phase.toUpperCase()} — {m.home} {m.homeGoals} x {m.awayGoals} {m.away}
-                                </p>
+                                <div key={i} className="history-row">
+                                    <span className="phase-tag">{m.phase.toUpperCase()}</span>
+                                    <span style={{ fontWeight: 'bold' }}>
+                                        {m.home} {m.homeGoals} <span style={{ color: '#888' }}>x</span> {m.awayGoals} {m.away}
+                                    </span>
+                                </div>
                             ))}
+
+                            <button className="button-draft"
+                                onClick={() => window.location.reload()}>
+                                JOGAR NOVAMENTE
+                            </button>
                         </div>
                     )}
 
