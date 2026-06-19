@@ -36,6 +36,10 @@ export default function DraftScreen() {
     const [matchHistory, setMatchHistory] = useState([]);
 
 
+    const matchRunningRef = useRef(false);
+    const matchIntervalRef = useRef(null);
+    const secondIntervalRef = useRef(null);
+    const matchSnapshotRef = useRef(null);
 
     const positionGroups = {
         CB1: ["CB1", "CB2"],
@@ -252,6 +256,7 @@ export default function DraftScreen() {
         setPenaltyMode(false);
         setPenalties(null);
         setMatchFinished(false);
+        matchRunningRef.current = true;
 
         if (matchStarted) return;
         setMatchStarted(true);
@@ -266,21 +271,41 @@ export default function DraftScreen() {
         let golsSeuTime = 0;
         let golsAdversario = 0;
 
-        const interval = setInterval(() => {
+
+        const overallAdversarioBase = currentMatch.overall ?? 70;
+        const overallAdversarioAjustado = knockoutPhase
+            ? overallAdversarioBase
+            : Math.floor(overallAdversarioBase * 0.85);
+
+        matchSnapshotRef.current = {
+            home: "Seu Time",
+            away: currentMatch.name
+        };
+
+        matchIntervalRef.current = setInterval(() => {
+
+            if (!matchRunningRef.current) return;
 
             minuto++;
 
+
             const chanceReal = calcularChanceGol(
                 calcularOverall(),
-                currentMatch.overall ?? 70
+                overallAdversarioAjustado
             );
+
+            const chanceFinal = knockoutPhase
+                ? chanceReal
+                : chanceReal * 1.5;
 
             const chanceEvento = Math.random();
 
-            if (chanceEvento < chanceReal &&
+            if (chanceEvento < chanceFinal &&
                 !usedMinutes.includes(minuto)) {
 
-                const golSeuTime = Math.random() < 0.6;
+                const golSeuTime = knockoutPhase
+                    ? Math.random() < 0.6
+                    : Math.random() < 0.75;
 
                 if (golSeuTime) {
 
@@ -350,25 +375,34 @@ export default function DraftScreen() {
             // ⏸ intervalo
             else if (minuto === 46 + acr1) {
 
-                clearInterval(interval);
+                clearInterval(matchIntervalRef.current);
 
                 setTimeout(() => {
 
                     let segundoTempo = 46;
 
-                    const secondHalfInterval = setInterval(() => {
+                    secondIntervalRef.current = setInterval(() => {
+
+                        if (!matchRunningRef.current) return;
+
 
                         const chanceReal = calcularChanceGol(
                             calcularOverall(),
-                            currentMatch.overall ?? 70
+                            overallAdversarioAjustado
                         );
+
+                        const chanceFinal = knockoutPhase
+                            ? chanceReal
+                            : chanceReal * 1.5;
 
                         const chanceEvento = Math.random();
 
-                        if (chanceEvento < chanceReal &&
+                        if (chanceEvento < chanceFinal &&
                             !usedMinutes.includes(segundoTempo)) {
 
-                            const golSeuTime = Math.random() < 0.6;
+                            const golSeuTime = knockoutPhase
+                                ? Math.random() < 0.6
+                                : Math.random() < 0.75;
 
                             if (golSeuTime) {
 
@@ -380,9 +414,12 @@ export default function DraftScreen() {
                                         ? `90+${segundoTempo - 90}'`
                                         : `${segundoTempo}'`;
 
+                                const jogadoresPossiveis =
+                                    selectedPlayers.filter(p => p.position !== "GK");
+
                                 const autorGol =
-                                    selectedPlayers.filter(p => p.position !== "GK")[
-                                    Math.floor(Math.random() * selectedPlayers.length)
+                                    jogadoresPossiveis[
+                                    Math.floor(Math.random() * jogadoresPossiveis.length)
                                     ];
 
                                 setMatchEvents(prev => [
@@ -432,12 +469,16 @@ export default function DraftScreen() {
                         }
 
                         else {
-                            clearInterval(secondHalfInterval);
-                            clearInterval(interval); // <- IMPORTANTE
+
 
                             setMatchMinute("FIM DE JOGO");
                             setMatchFinished(true);
                             setMatchStarted(false);
+
+                            matchRunningRef.current = false;
+
+                            clearInterval(matchIntervalRef.current)
+                            clearInterval(secondIntervalRef.current)
 
                             setGamePhase(prev => prev);
 
@@ -461,11 +502,11 @@ export default function DraftScreen() {
 
                             ]);
 
-                            if (golsSeuTime === golsAdversario) {
-                                if (knockoutPhase) {
+                            if (!knockoutPhase) {
+                                atualizarTabelaPartida(golsSeuTime, golsAdversario);
+                            } else if (knockoutPhase) {
+                                if (golsSeuTime === golsAdversario) {
                                     setTimeout(() => iniciarPenaltis(), 800);
-                                } else {
-                                    atualizarTabelaPartida(golsSeuTime, golsAdversario);
                                 }
                             }
 
@@ -538,7 +579,9 @@ export default function DraftScreen() {
                 }
 
                 // ADVERSÁRIO ATUAL
-                if (team.team === currentMatch.name) {
+                const adversario = matchSnapshotRef.current?.away;
+
+                if (team.team === adversario) {
 
                     const novoTime = {
                         ...team,
@@ -565,6 +608,8 @@ export default function DraftScreen() {
                 return team;
             })
         );
+
+        matchRunningRef.current = false;
     }
 
 
@@ -705,8 +750,23 @@ export default function DraftScreen() {
 
     const penaltyRunningRef = useRef(false);
 
-    function iniciarPenaltis() {
+    function finalizarPenaltis(home, away) {
+        clearInterval(matchIntervalRef.current);
 
+        setTimeout(() => {
+            setPenaltyMode(false);
+            penaltyRunningRef.current = false;
+            salvarPenaltiFinal(home, away);
+
+            if (home > away) {
+                avancarMataMata();
+            } else {
+                setGamePhase("eliminated");
+            }
+        }, 1200);
+    }
+
+    function iniciarPenaltis() {
         if (gamePhase !== "match") return;
         if (penaltyRunningRef.current) return;
         penaltyRunningRef.current = true;
@@ -725,79 +785,56 @@ export default function DraftScreen() {
         let home = 0;
         let away = 0;
 
-        const interval = setInterval(() => {
 
-            if (index < 5) {
+        if (matchIntervalRef.current) clearInterval(matchIntervalRef.current);
 
-                const homePlayer = cobradoresSeuTime[index];
-                const awayPlayer = cobradoresAdversario[index];
+        matchIntervalRef.current = setInterval(() => {
 
-                const homeGoal = Math.random() < 0.78;
-                const awayGoal = Math.random() < 0.78;
+            const isMorteSubita = index >= 5;
 
-                if (homePlayer) {
-                    setPenaltyEvents(prev => [
-                        ...prev,
-                        homeGoal ? `⚽ ${homePlayer.name}` : `❌ ${homePlayer.name}`
-                    ]);
-                    if (homeGoal) home++;
+
+            const homePlayer = cobradoresSeuTime[index % cobradoresSeuTime.length];
+            const awayPlayer = cobradoresAdversario[index % cobradoresAdversario.length];
+
+            const homeGoal = Math.random() < 0.78;
+            const awayGoal = Math.random() < 0.78;
+
+            if (homePlayer) {
+                setPenaltyEvents(prev => [
+                    ...prev,
+                    homeGoal ? `⚽ ${homePlayer.name}` : `❌ ${homePlayer.name}`
+                ]);
+                if (homeGoal) home++;
+            }
+
+            if (awayPlayer) {
+                setPenaltyEvents(prev => [
+                    ...prev,
+                    awayGoal ? `⚽ ${awayPlayer.name}` : `❌ ${awayPlayer.name}`
+                ]);
+                if (awayGoal) away++;
+            }
+
+            setPenaltyHome(home);
+            setPenaltyAway(away);
+
+            index++;
+
+
+            if (!isMorteSubita) {
+
+                const remaining = 5 - index;
+
+
+                if (home > away + remaining || away > home + remaining) {
+                    finalizarPenaltis(home, away);
                 }
+            } else {
 
-                if (awayPlayer) {
-                    setPenaltyEvents(prev => [
-                        ...prev,
-                        awayGoal ? `⚽ ${awayPlayer.name}` : `❌ ${awayPlayer.name}`
-                    ]);
-                    if (awayGoal) away++;
+                if (home !== away) {
+                    finalizarPenaltis(home, away);
                 }
-
-                setPenaltyHome(home);
-                setPenaltyAway(away);
-
-                index++;
-                return;
             }
-
-            const remaining = 5 - index;
-
-            if (home > away + remaining) {
-                clearInterval(interval);
-
-                setPenaltyMode(false);
-                penaltyRunningRef.current = false;
-
-                salvarPenaltiFinal(home, away);
-                setTimeout(() => avancarMataMata(), 1200);
-                return;
-            }
-
-            if (away > home + remaining) {
-                clearInterval(interval);
-
-                setPenaltyMode(false);
-                penaltyRunningRef.current = false;
-
-                salvarPenaltiFinal(home, away);
-                setTimeout(() => setGamePhase("eliminated"), 1200);
-                return;
-            }
-
-            if (index >= 5) {
-                clearInterval(interval);
-
-                setTimeout(() => {
-                    setPenaltyMode(false);
-                    penaltyRunningRef.current = false;
-
-                    salvarPenaltiFinal(home, away);
-
-                    if (home > away) avancarMataMata();
-                    else if (away > home) setGamePhase("eliminated");
-                    else iniciarPenaltis(); // desempate
-
-                }, 1000);
-            }
-
         }, 1200);
     }
 
