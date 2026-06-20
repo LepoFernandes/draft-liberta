@@ -520,10 +520,20 @@
     font-weight: bold;
 }
 
+.match-finished-message {
+    text-align: center;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 10px;
+    margin: 10px 0;
+    color: #ffd700;
+    animation: fadeIn 0.5s;
+}
+
 @media (max-width: 900px) {
 
     .field {
-        height: 80vh;
+        height: 90vh;
         max-width: 100%;
     }
 
@@ -573,22 +583,36 @@
         width: 80%;
         padding: 1.5rem;
         margin: 10px auto;
-        
+
     }
 
     .result-title {
         font-size: 1.5rem;
-        
+
     }
 
     .history-row {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
         padding: 8px;
+    }
+
+    .match-overlay {
+        font-size: small;
+        max-height: 80vh;
+
     }
 
 }
 
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
 
+    to {
+        opacity: 1;
+    }
+}
 
 @keyframes pulse {
     0% {

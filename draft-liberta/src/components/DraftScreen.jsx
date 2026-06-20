@@ -705,33 +705,31 @@ export default function DraftScreen() {
 
     function avancarMataMata() {
 
-        if (knockoutPhase === "oitavas") {
-            setKnockoutPhase("quartas")
+        if (knockoutPhase === "final") {
+            const venceu = homeGoals > awayGoals || (penaltyMode && penaltyHome > penaltyAway);
+
+
+            setGamePhase(venceu ? "champion" : "eliminated");
+            return;
         }
 
-        else if (knockoutPhase === "quartas") {
-            setKnockoutPhase("semi")
-        }
 
-        else if (knockoutPhase === "semi") {
-            setKnockoutPhase("final")
-        }
+        if (knockoutPhase === "oitavas") setKnockoutPhase("quartas");
+        else if (knockoutPhase === "quartas") setKnockoutPhase("semi");
+        else if (knockoutPhase === "semi") setKnockoutPhase("final");
 
-        else if (knockoutPhase === "final") {
-            setKnockoutPhase("champion")
-            return
-        }
 
         sortearAdversarioMataMata();
-
         setMatchStarted(false);
         setMatchFinished(false);
-
         setMatchMinute("0'");
         setHomeGoals(0);
         setAwayGoals(0);
-
+        setPenaltyHome(0);
+        setPenaltyAway(0);
         setMatchEvents([]);
+        setPenaltyEvents([]);
+        setPenaltyMode(false);
     }
 
 
@@ -995,7 +993,7 @@ export default function DraftScreen() {
 
                             <h3>SEU TIME X {currentMatch?.name}</h3>
 
-                            
+
                             <p className="match-minute">{matchMinute}</p>
 
                             <div className="score-board">
@@ -1005,7 +1003,7 @@ export default function DraftScreen() {
                                             <h1 className="my-team-color">{penaltyHome}</h1>
                                             <div className="event-list">
                                                 {penaltyEvents.filter(e => e.time === 'home').map((pe, idx) => (
-                                                    <p key={idx} className="penalty-goal">✅ {pe.name}</p>
+                                                    <p key={idx} className={pe.gol ? "penalty-goal" : "penalty-miss"}>{pe.gol ? "✅" : "❌"} {pe.name}</p>
                                                 ))}
                                             </div>
                                         </div>
@@ -1013,7 +1011,7 @@ export default function DraftScreen() {
                                             <h1 className="away-team-color">{penaltyAway}</h1>
                                             <div className="event-list">
                                                 {penaltyEvents.filter(e => e.time === 'away').map((pe, idx) => (
-                                                    <p key={idx} className="penalty-miss">❌ {pe.name}</p>
+                                                    <p key={idx} className={pe.gol ? "penalty-goal" : "penalty-miss"}>{pe.gol ? "✅" : "❌"} {pe.name}</p>
                                                 ))}
                                             </div>
                                         </div>
@@ -1038,6 +1036,12 @@ export default function DraftScreen() {
                                         </div>
                                     </div>
                                 )}
+                                {matchFinished && (
+                                    <div className="match-finished-message">
+                                        <h2>{penaltyMode ? "Disputa de Pênaltis Encerrada!" : "Fim de Jogo!"}</h2>
+                                        <p>Clique em "PRÓXIMA PARTIDA" ou "VER RESULTADO" para prosseguir.</p>
+                                    </div>
+                                )}
                             </div>
 
                             {!matchStarted && !matchFinished && (
@@ -1054,12 +1058,10 @@ export default function DraftScreen() {
                                         iniciarPartida();
                                     } else if (matchFinished) {
 
-                                        if (knockoutPhase === "final" && (homeGoals > awayGoals || (penaltyMode && penaltyHome > penaltyAway))) {
-                                            setGamePhase("champion");
+                                        if (knockoutPhase === "final") {
+                                            const venceu = homeGoals > awayGoals || (penaltyMode && penaltyHome > penaltyAway);
+                                            setGamePhase(venceu ? "champion" : "eliminated");
                                             return;
-                                        }
-                                        if (knockoutPhase === "final" && (homeGoals < awayGoals || (penaltyMode && penaltyHome < penaltyAway))) {
-                                            setGamePhase("eliminated");
                                         }
 
 
@@ -1069,7 +1071,9 @@ export default function DraftScreen() {
                                             } else {
                                                 setGamePhase("eliminated");
                                             }
-                                        } else {
+                                        }
+
+                                        else {
                                             if (matchIndex > 2) {
                                                 completarTabela();
                                                 setGamePhase("table");
@@ -1084,9 +1088,11 @@ export default function DraftScreen() {
                                     !matchStarted && !matchFinished
                                         ? "INICIAR PARTIDA"
                                         : matchFinished
-                                            ? (gamePhase === "table"
-                                                ? "VER CLASSIFICAÇÃO"
-                                                : "PRÓXIMA PARTIDA")
+                                            ? (gamePhase === "champion" || gamePhase === "eliminated"
+                                                ? "VER RESULTADO FINAL"
+                                                : gamePhase === "table"
+                                                    ? "VER CLASSIFICAÇÃO"
+                                                    : "PRÓXIMA PARTIDA")
                                             : "PARTIDA EM ANDAMENTO"
                                 }
                             </button>
