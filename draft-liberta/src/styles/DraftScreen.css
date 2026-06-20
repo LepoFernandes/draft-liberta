@@ -237,7 +237,7 @@
 }
 
 .button-draft {
-    margin-top: 100px;
+    margin-top: 10px;
 
     background: #CF4B00;
     color: #FCF6D9;
@@ -522,12 +522,12 @@
 
 .match-finished-message {
     text-align: center;
-    background: rgba(0, 0, 0, 0.7);
     padding: 15px;
     border-radius: 10px;
-    margin: 10px 0;
-    color: #ffd700;
+    margin-top: 10px;
+    color: #DDBA7D;
     animation: fadeIn 0.5s;
+    font-size: 0.8rem;
 }
 
 @media (max-width: 900px) {
