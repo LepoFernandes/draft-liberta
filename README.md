@@ -1,318 +1,72 @@
-# Draft Libertadores
+Draft Libertadores
+Visão Geral
+Draft Libertadores é um simulador de futebol web que coloca o jogador na pele de um treinador montando um "Dream Team" histórico. Através de um sistema de draft estratégico, você escolhe atletas de times lendários campeões da Libertadores para escalar seu 4-3-3 e buscar a glória continental. O jogo foca em uma experiência rápida, imersiva e com elementos de tensão, como disputas de pênaltis e mata-matas decisivos.
 
-## Visão Geral
+Tecnologias (Stack v1.0)
+Frontend: React, Vite
 
-Draft Libertadores é um jogo web inspirado em simuladores históricos de futebol.
+Linguagem: JavaScript (ES6+)
 
-O jogador monta um elenco utilizando atletas de times históricos campeões da Libertadores através de um sistema de draft. Após montar sua equipe, participa de uma campanha simulada com fase de grupos, mata-mata e estatísticas finais.
+Estilização: CSS puro (Responsivo)
 
-O objetivo é criar uma experiência divertida e estratégica sem depender de simulações extremamente complexas.
+Estado: React Hooks (useState, useEffect, useRef)
 
----
+Persistência: LocalStorage (para salvar campanhas e dados de draft)
 
-# Tecnologias
+Fluxo e Mecânicas de Jogo
+1. Montagem do Elenco (Draft)
+O jogo utiliza um sistema de sorteio de times históricos. O jogador deve preencher as 11 posições do campo (4-3-3) selecionando jogadores de times distintos, criando um esquadrão único com base nos overalls de cada atleta.
 
-## Versão Inicial
+2. Simulação de Partida
+O motor de simulação calcula o desempenho baseado na média de overall do seu elenco versus a força do adversário.
 
-* React
-* Vite
-* JavaScript
-* CSS puro
-* LocalStorage
+Simulação em Tempo Real: O jogo gera eventos (gols, assistências) durante a partida, criando uma narrativa visual.
 
-## Futuramente
+Decisões Críticas: Em fases de mata-mata, o jogo gerencia nativamente a possibilidade de Disputas de Pênaltis, onde o usuário acompanha a alternância de cobranças com um sistema de controle de fluxo manual, garantindo que o jogador tenha tempo de celebrar ou lamentar cada lance.
 
-* Backend
-* Banco de dados
-* Sistema de contas
-* Ranking online
+3. Estrutura da Competição
+Fase de Grupos: Pontos corridos para garantir a classificação.
 
----
+Mata-Mata: Quartas, Semifinal e Final com desempate por pênaltis.
 
-# Estrutura Inicial
+Gestão de Fase: O jogo possui um sistema de gamePhase que controla o fluxo, permitindo transições fluidas entre o draft, a simulação e o resultado final.
 
+Estrutura do Projeto
+Plaintext
 src/
+├── components/     # Componentes de UI (Field, PlayerCard, MatchSimulation, etc.)
+├── data/           # Banco de dados de times históricos e atributos
+├── hooks/          # Lógica personalizada para simulação
+├── styles/         # Estilização modular por tela
+└── assets/         # Imagens, escudos e ícones
+Roadmap e Evolução
+Versão Atual (V1 - Em Aprimoramento)
+[x] Estrutura 4-3-3 e Draft de Jogadores.
 
-components/
+[x] Simulação de Partida (Fase de Grupos e Mata-mata).
 
-* HomeScreen
-* DraftScreen
-* Field
-* PlayerCard
-* MatchSimulation
-* CampaignSummary
+[x] Sistema de Pênaltis com controle de fluxo do jogador.
 
-data/
+[x] Feedback de estatísticas e placar.
 
-* teams.js
-* traits.js
+Futuro (V2+)
+Sistema de Sinergia: Bônus para jogadores do mesmo time histórico no elenco.
 
-styles/
+Traits: Habilidades especiais (Ex: "Muralha", "Batedor de Pênaltis").
 
-* Home.css
-* Draft.css
-* Field.css
-* Simulation.css
+Narrativa de Mundial: Geração automática de Mundial de Clubes após o título da Libertadores.
 
-assets/
+Backend & Ranking: Implementação de API para salvar rankings globais.
 
-* imagens
-* ícones
+Objetivo da V1
+Entregar uma experiência completa onde o jogador possa:
 
----
+Montar um elenco histórico.
 
-# Fluxo do Jogo
+Superar desafios táticos e a tensão dos pênaltis.
 
-## Tela Inicial
+Conquistar a taça da Libertadores.
 
-Exibe:
+Reiniciar o ciclo de forma rápida, sem a necessidade de logins complexos ou infraestrutura externa.
 
-* Nome do jogo
-* Breve explicação
-* Botão Jogar
-
-Ao clicar em Jogar ocorre uma transição suave para a tela principal.
-
----
-
-## Tela de Draft
-
-Campo de futebol em formação 4-3-3.
-
-Posições:
-
-* GK
-* LE
-* ZAG
-* ZAG
-* LD
-* VOL
-* MC
-* MC
-* PE
-* CA
-* PD
-
-O jogador sorteia um time histórico e escolhe um atleta.
-
-O atleta é adicionado à posição correspondente.
-
----
-
-## Banco de Dados
-
-Cada atleta terá:
-
-* Nome
-* Time
-* Ano
-* Posição
-* Overall
-
-Exemplo:
-
-Nome: Gabigol
-Time: Flamengo
-Ano: 2019
-Posição: CA
-Overall: 91
-
----
-
-## Sistema de Draft
-
-1. Sortear time
-2. Exibir jogadores
-3. Escolher jogador
-4. Adicionar ao elenco
-5. Remover time do sorteio
-6. Repetir até completar o elenco
-
----
-
-## Simulação
-
-A força do time será baseada na média dos overalls.
-
-Exemplo:
-
-Time do jogador: 89
-
-Adversário: 84
-
-Quanto maior a diferença, maior a chance de vitória.
-
----
-
-## Eventos da Partida
-
-Mesmo que o resultado já esteja definido, o jogo exibirá uma simulação visual.
-
-Exemplos:
-
-⚽ Gabigol 22'
-
-🅰️ Arrascaeta
-
-⚽ Bruno Henrique 74'
-
-🅰️ Everton Ribeiro
-
-Objetivo:
-
-Dar sensação de partida ao vivo com pouca complexidade de programação.
-
----
-
-## Competição
-
-Versão inicial:
-
-* Fase de grupos
-* Quartas
-* Semifinal
-* Final
-
----
-
-## Tela de Resultado
-
-Exibe:
-
-* Colocação final
-* Artilheiro
-* Melhor jogador
-* Campanha completa
-* Estatísticas gerais
-
----
-
-# Funcionalidades Futuras
-
-## Mundial de Clubes
-
-Após o término da Libertadores, gerar uma narrativa de Mundial.
-
-Exemplo:
-
-Semifinal:
-3x0 Al Ahly
-
-Final:
-2x1 Borussia Dortmund
-
-🏆 Campeão Mundial
-
----
-
-## Conquistas
-
-Exemplos:
-
-* Invicto
-* Artilheiro
-* Muralha
-* Azarado
-* Rei da América
-
----
-
-## Eventos Secundários
-
-Exemplos:
-
-* Gol contra
-* Lesão
-* Expulsão
-* Pênalti perdido
-
----
-
-## Traits
-
-Exemplos:
-
-Campeão Mundial
-
-* bônus de desempenho
-
-Especialista em Pênaltis
-
-* chance de defesa
-
----
-
-## Sinergia
-
-Jogadores do mesmo elenco histórico recebem bônus.
-
-Exemplo:
-
-3 jogadores do Corinthians 2012
-
-* Entrosamento
-
----
-
-## Raridade
-
-Times e jogadores podem possuir níveis de raridade.
-
-Exemplos:
-
-⭐ Comum
-
-⭐⭐ Raro
-
-⭐⭐⭐ Lendário
-
----
-
-# Roadmap da Versão 1
-
-Semana 1
-
-* Criar projeto
-* Tela inicial
-* Campo
-* Navegação
-
-Semana 2
-
-* Banco de dados
-* Jogadores
-* Cards
-
-Semana 3
-
-* Sistema de draft
-* Escalação
-
-Semana 4
-
-* Simulação
-* Gols
-* Assistências
-
-Semana 5
-
-* Libertadores completa
-
-Semana 6
-
-* Estatísticas
-* Tela final
-
----
-
-# Objetivo Final da V1
-
-O jogador deve conseguir:
-
-1. Entrar no jogo
-2. Montar um elenco histórico
-3. Disputar uma Libertadores simulada
-4. Receber estatísticas e conquistas
-5. Jogar novamente
-
-Sem necessidade de login, backend ou banco de dados online.
+Desenvolvido com foco em jogabilidade, tensão e nostalgia futebolística.
