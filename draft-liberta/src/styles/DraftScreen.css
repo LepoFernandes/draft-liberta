@@ -409,15 +409,6 @@
     background: rgba(0, 255, 100, 0.08);
 }
 
-.goal-home {
-    color: limegreen;
-    font-weight: bold;
-}
-
-.goal-away {
-    color: tomato;
-    font-weight: bold;
-}
 
 .my-team-color {
     color: limegreen;

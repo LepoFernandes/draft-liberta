@@ -34,6 +34,7 @@ export default function DraftScreen() {
     const [penaltyHome, setPenaltyHome] = useState(0);
     const [penaltyAway, setPenaltyAway] = useState(0);
     const [matchHistory, setMatchHistory] = useState([]);
+    const [penaltyCompleted, setPenaltyCompleted] = useState(false);
 
 
     const matchRunningRef = useRef(false);
@@ -289,23 +290,24 @@ export default function DraftScreen() {
             minuto++;
 
 
-            const chanceReal = calcularChanceGol(
-                calcularOverall(),
-                overallAdversarioAjustado
-            );
-
-            const chanceFinal = knockoutPhase
-                ? chanceReal
-                : chanceReal * 1.5;
+            const chanceReal = calcularChanceGol(calcularOverall(), overallAdversarioAjustado);
+            const chanceFinal = knockoutPhase ? chanceReal : chanceReal * 1.5;
 
             const chanceEvento = Math.random();
 
-            if (chanceEvento < chanceFinal &&
-                !usedMinutes.includes(minuto)) {
+            if (chanceEvento < chanceFinal && !usedMinutes.includes(minuto)) {
 
-                const golSeuTime = knockoutPhase
-                    ? Math.random() < 0.6
-                    : Math.random() < 0.75;
+                const ovrSeuTime = calcularOverall();
+
+
+                const pesoAdversario = knockoutPhase
+                    ? overallAdversarioAjustado
+                    : Math.floor(overallAdversarioAjustado * 0.8);
+
+                const somaTotal = ovrSeuTime + pesoAdversario;
+
+
+                const golSeuTime = (Math.random() * somaTotal) < ovrSeuTime;
 
                 if (golSeuTime) {
 
@@ -347,10 +349,11 @@ export default function DraftScreen() {
                             ? `45+${minuto - 45}'`
                             : `${minuto}'`;
 
-                    const autorGol =
-                        currentMatch.players[
-                        Math.floor(Math.random() * currentMatch.players.length)
-                        ];
+                    const jogadoresPossiveis = currentMatch.players.filter
+                        (p => p.position !== "GK");
+
+                    const autorGol = jogadoresPossiveis[
+                        Math.floor(Math.random() * jogadoresPossiveis.length)];
 
                     setMatchEvents(prev => [
                         ...prev,
@@ -386,23 +389,23 @@ export default function DraftScreen() {
                         if (!matchRunningRef.current) return;
 
 
-                        const chanceReal = calcularChanceGol(
-                            calcularOverall(),
-                            overallAdversarioAjustado
-                        );
-
-                        const chanceFinal = knockoutPhase
-                            ? chanceReal
-                            : chanceReal * 1.2;
+                        const chanceReal = calcularChanceGol(calcularOverall(), overallAdversarioAjustado);
+                        const chanceFinal = knockoutPhase ? chanceReal : chanceReal * 1.5;
 
                         const chanceEvento = Math.random();
 
-                        if (chanceEvento < chanceFinal &&
-                            !usedMinutes.includes(segundoTempo)) {
+                        if (chanceEvento < chanceFinal && !usedMinutes.includes(segundoTempo)) {
 
-                            const golSeuTime = knockoutPhase
-                                ? Math.random() < 0.6
-                                : Math.random() < 0.75;
+                            const ovrSeuTime = calcularOverall();
+
+                            const pesoAdversario = knockoutPhase
+                                ? overallAdversarioAjustado
+                                : Math.floor(overallAdversarioAjustado * 0.8);
+
+                            const somaTotal = ovrSeuTime + pesoAdversario;
+
+
+                            const golSeuTime = (Math.random() * somaTotal) < ovrSeuTime;
 
                             if (golSeuTime) {
 
@@ -444,10 +447,11 @@ export default function DraftScreen() {
                                         ? `90+${segundoTempo - 90}'`
                                         : `${segundoTempo}'`;
 
-                                const autorGol =
-                                    currentMatch.players[
-                                    Math.floor(Math.random() * currentMatch.players.length)
-                                    ];
+                                const jogadoresPossiveis = currentMatch.players.filter
+                                    (p => p.position !== "GK");
+
+                                const autorGol = jogadoresPossiveis[
+                                    Math.floor(Math.random() * jogadoresPossiveis.length)];
 
                                 setMatchEvents(prev => [
                                     ...prev,
@@ -695,12 +699,15 @@ export default function DraftScreen() {
 
     function sortearAdversarioMataMata() {
 
-        const adversarios = teams.filter(team => team.name !== currentMatch?.name);
+        const disponiveis = teams.filter(team => usedTeams.has(team.id));
 
-        const adversario =
-            adversarios[Math.floor(Math.random() * adversarios.length)]
+        if (disponiveis.length === 0) {
+            return
+        }
 
-        setCurrentMatch(adversario)
+        const adversario = disponiveis[Math.floor(Math.random() * disponiveis.length)]
+
+        setCurrentMatch(adversario);
     }
 
     function avancarMataMata() {
@@ -751,19 +758,23 @@ export default function DraftScreen() {
     function finalizarPenaltis(home, away) {
         clearInterval(matchIntervalRef.current);
 
-        setTimeout(() => {
-            setPenaltyMode(false);
-            penaltyRunningRef.current = false;
-            salvarPenaltiFinal(home, away);
+        penaltyRunningRef.current = false;
+        salvarPenaltiFinal(home, away);
 
-            if (home > away) {
-                avancarMataMata();
-            } else {
-                setGamePhase("eliminated");
-            }
-        }, 1200);
+        setPenaltyCompleted(true)
+
     }
 
+    const handleAvancarFase = () => {
+        const { home, away } = matchResultRef.current;
+
+        if (home > away) {
+            avancarMataMata();
+        } else {
+            setGamePhase("eliminated");
+        }
+        setMatchFinished(false);
+    };
 
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -775,6 +786,8 @@ export default function DraftScreen() {
         setPenaltyEvents([]);
         setPenaltyHome(0);
         setPenaltyAway(0);
+
+        setMatchFinished(false);
 
         const cobradoresSeuTime = selectedPlayers.filter(p => p.position !== "GK");
         const cobradoresAdversario = currentMatch.players.filter(p => p.position !== "GK");
@@ -997,21 +1010,21 @@ export default function DraftScreen() {
                             <p className="match-minute">{matchMinute}</p>
 
                             <div className="score-board">
-                                {penaltyMode ? (
+                                {(penaltyMode || penaltyCompleted) ? (
                                     <div className="side-by-side">
                                         <div className="team-side">
-                                            <h1 className="my-team-color">{penaltyHome}</h1>
+                                            <h1>{penaltyHome}</h1>
                                             <div className="event-list">
                                                 {penaltyEvents.filter(e => e.time === 'home').map((pe, idx) => (
-                                                    <p key={idx} className={pe.gol ? "penalty-goal" : "penalty-miss"}>{pe.gol ? "✅" : "❌"} {pe.name}</p>
+                                                    <p key={idx} className={`my-team-color ${pe.gol ? "penalty-goal" : "penalty-miss"}`}>{pe.gol ? "✅" : "❌"} {pe.name}</p>
                                                 ))}
                                             </div>
                                         </div>
                                         <div className="team-side">
-                                            <h1 className="away-team-color">{penaltyAway}</h1>
+                                            <h1>{penaltyAway}</h1>
                                             <div className="event-list">
                                                 {penaltyEvents.filter(e => e.time === 'away').map((pe, idx) => (
-                                                    <p key={idx} className={pe.gol ? "penalty-goal" : "penalty-miss"}>{pe.gol ? "✅" : "❌"} {pe.name}</p>
+                                                    <p key={idx} className={`away-team-color ${pe.gol ? "penalty-goal" : "penalty-miss"}`}>{pe.gol ? "✅" : "❌"} {pe.name}</p>
                                                 ))}
                                             </div>
                                         </div>
@@ -1022,7 +1035,7 @@ export default function DraftScreen() {
                                             <h1>{homeGoals}</h1>
                                             <div className="event-list">
                                                 {matchEvents.filter(e => e.home).slice(-5).map((e, i) => (
-                                                    <p key={i}>⚽ {e.player} <small>{e.minute}'</small></p>
+                                                    <p key={i} className="my-team-color">⚽ {e.player} <small>{e.minute}'</small></p>
                                                 ))}
                                             </div>
                                         </div>
@@ -1030,7 +1043,7 @@ export default function DraftScreen() {
                                             <h1>{awayGoals}</h1>
                                             <div className="event-list">
                                                 {matchEvents.filter(e => !e.home).slice(-5).map((e, i) => (
-                                                    <p key={i}><small>{e.minute}'</small> ⚽ {e.player}</p>
+                                                    <p key={i} className="away-team-color"><small>{e.minute}'</small> ⚽ {e.player}</p>
                                                 ))}
                                             </div>
                                         </div>
@@ -1056,25 +1069,22 @@ export default function DraftScreen() {
                                 onClick={() => {
                                     if (!matchStarted && !matchFinished) {
                                         iniciarPartida();
-                                    } else if (matchFinished) {
+                                    }
+                                    else if (matchFinished) {
+                                        // Se estava rolando pênalti, encerramos agora ao clicar
+                                        if (penaltyCompleted) {
+                                            setPenaltyMode(false);
+                                            setPenaltyCompleted(false);
+                                        }
+
+                                        const venceu = homeGoals > awayGoals || (penaltyHome > penaltyAway);
 
                                         if (knockoutPhase === "final") {
-                                            const venceu = homeGoals > awayGoals || (penaltyMode && penaltyHome > penaltyAway);
                                             setGamePhase(venceu ? "champion" : "eliminated");
-                                            return;
-                                        }
-
-
-                                        if (knockoutPhase) {
-                                            if (homeGoals > awayGoals || (penaltyMode && penaltyHome > penaltyAway)) {
-                                                avancarMataMata();
-                                            } else {
-                                                setGamePhase("eliminated");
-                                            }
-                                        }
-
-                                        else {
-                                            if (matchIndex > 2) {
+                                        } else if (knockoutPhase) {
+                                            venceu ? avancarMataMata() : setGamePhase("eliminated");
+                                        } else {
+                                            if (matchIndex >= 2) {
                                                 completarTabela();
                                                 setGamePhase("table");
                                             } else {
@@ -1084,16 +1094,16 @@ export default function DraftScreen() {
                                     }
                                 }}
                             >
+
                                 {
-                                    !matchStarted && !matchFinished
-                                        ? "INICIAR PARTIDA"
-                                        : matchFinished
-                                            ? (gamePhase === "champion" || gamePhase === "eliminated"
-                                                ? "VER RESULTADO FINAL"
-                                                : gamePhase === "table"
-                                                    ? "VER CLASSIFICAÇÃO"
-                                                    : "PRÓXIMA PARTIDA")
-                                            : "PARTIDA EM ANDAMENTO"
+                                    !matchStarted && !matchFinished ? "INICIAR PARTIDA" :
+                                        matchFinished ? (
+                                            (gamePhase === "champion" || gamePhase === "eliminated") ? "VER RESULTADO" :
+                                                (knockoutPhase || matchIndex >= 2) ?
+                                                    ((homeGoals > awayGoals || penaltyHome > penaltyAway) ? "AVANÇAR DE FASE" : "VER RESULTADO") :
+                                                    "PRÓXIMA PARTIDA"
+                                        ) :
+                                            "PARTIDA EM ANDAMENTO"
                                 }
                             </button>
                         </div>
@@ -1271,7 +1281,7 @@ export default function DraftScreen() {
                                 className="button-draft"
                                 onClick={iniciarMataMata}
                             >
-                                CONTINUAR LIBERTADORES
+                                {gamePhase !== "eliminated" ? "CONTINUAR LIBERTADORES" : "ENCERRAR CAMPANHA"}
                             </button>
                         </>
                     )}

@@ -762,4 +762,73 @@ export const teams = [
             { name: "Andrezinho", position: "RW", overall: 83 }
         ]
     },
+
+    {
+        id: 38,
+        name: "Grêmio 2011", 
+        players: [
+            { name: "Victor", position: "GK", overall: 81 },
+            { name: "Gabriel", position: "RB", overall: 74 },
+            { name: "Rodolfo", position: "CB1", overall: 72 },
+            { name: "Neuton", position: "CB2", overall: 70 },
+            { name: "Gilson", position: "LB", overall: 68 },
+            { name: "Fábio Rochemback", position: "CDM", overall: 76 },
+            { name: "Adílson", position: "CM1", overall: 72 },
+            { name: "Douglas", position: "CM2", overall: 77 },
+            { name: "Escudero", position: "LW", overall: 73 },
+            { name: "Borges", position: "ST", overall: 75 },
+            { name: "André Lima", position: "RW", overall: 72 }
+        ]
+    },
+    {
+        id: 39,
+        name: "Inter 2019",
+        players: [
+            { name: "Marcelo Lomba", position: "GK", overall: 78 },
+            { name: "Bruno", position: "RB", overall: 70 },
+            { name: "Moledo", position: "CB1", overall: 77 },
+            { name: "Cuesta", position: "CB2", overall: 79 },
+            { name: "Uendel", position: "LB", overall: 71 },
+            { name: "Rodrigo Dourado", position: "CDM", overall: 78 },
+            { name: "Edenilson", position: "CM1", overall: 77 },
+            { name: "Patrick", position: "CM2", overall: 76 },
+            { name: "D'Alessandro", position: "LW", overall: 78 },
+            { name: "Paolo Guerrero", position: "ST", overall: 81 },
+            { name: "Nico López", position: "RW", overall: 75 }
+        ]
+    },
+    {
+        id: 40,
+        name: "Vasco 2012",
+        players: [
+            { name: "Fernando Prass", position: "GK", overall: 79 },
+            { name: "Fagner", position: "RB", overall: 77 },
+            { name: "Dedé", position: "CB1", overall: 81 },
+            { name: "Rodolfo", position: "CB2", overall: 72 },
+            { name: "Thiago Feltri", position: "LB", overall: 70 },
+            { name: "Nilton", position: "CDM", overall: 74 },
+            { name: "Romulo", position: "CM1", overall: 75 },
+            { name: "Juninho P.", position: "CM2", overall: 80 },
+            { name: "Diego Souza", position: "LW", overall: 78 },
+            { name: "Alecsandro", position: "ST", overall: 74 },
+            { name: "Éder Luis", position: "RW", overall: 73 }
+        ]
+    },
+    {
+        id: 41,
+        name: "Botafogo 2014",
+        players: [
+            { name: "Jefferson", position: "GK", overall: 80 },
+            { name: "Edilson", position: "RB", overall: 71 },
+            { name: "Bolivar", position: "CB1", overall: 70 },
+            { name: "Dória", position: "CB2", overall: 75 },
+            { name: "Júnior César", position: "LB", overall: 70 },
+            { name: "Gabriel", position: "CDM", overall: 71 },
+            { name: "Marcelo Mattos", position: "CM1", overall: 70 },
+            { name: "Lodeiro", position: "CM2", overall: 76 },
+            { name: "Wallyson", position: "LW", overall: 72 },
+            { name: "Ferreyra", position: "ST", overall: 71 },
+            { name: "Emerson S.", position: "RW", overall: 74 }
+        ]
+    }
 ]
