@@ -24,7 +24,7 @@ export default function DraftScreen() {
     const [awayGoals, setAwayGoals] = useState(0);
     const [matchEvents, setMatchEvents] = useState([]);
     const [usedMinutes, setUsedMinutes] = useState([]);
-    const [matchIndex, setMatchIndex] = useState(1);
+    const [matchIndex, setMatchIndex] = useState(0);
     const [groupTable, setGroupTable] = useState([]);
     const [tableCompleted, setTableCompleted] = useState(false);
     const [knockoutPhase, setKnockoutPhase] = useState(null)
@@ -41,6 +41,8 @@ export default function DraftScreen() {
     const matchIntervalRef = useRef(null);
     const secondIntervalRef = useRef(null);
     const matchSnapshotRef = useRef(null);
+    const penaltyLockRef = useRef(false);
+    const phaseTransitionRef = useRef(false);
 
     const positionGroups = {
         CB1: ["CB1", "CB2"],
@@ -190,10 +192,7 @@ export default function DraftScreen() {
         const grupo = shuffled.slice(0, 3);
         setTimeout(() => {
 
-            setGroup([
-                "Seu Time",
-                ...grupo
-            ])
+            setGroup(grupo)
 
             setGroupTable([{
                 team: "Seu Time",
@@ -222,7 +221,7 @@ export default function DraftScreen() {
             ]);
 
             setCurrentMatch(grupo[0]);
-            setMatchIndex(1);
+            setMatchIndex(0);
 
             setDrawingGroup(false)
 
@@ -484,6 +483,8 @@ export default function DraftScreen() {
                             clearInterval(matchIntervalRef.current)
                             clearInterval(secondIntervalRef.current)
 
+                            matchRunningRef.current = false;
+
                             setGamePhase(prev => prev);
 
                             setMatchHistory(prev => [
@@ -510,7 +511,14 @@ export default function DraftScreen() {
                                 atualizarTabelaPartida(golsSeuTime, golsAdversario);
                             } else if (knockoutPhase) {
                                 if (golsSeuTime === golsAdversario) {
-                                    setTimeout(() => iniciarPenaltis(), 800);
+                                    if (penaltyLockRef.current) return;
+
+                                    penaltyLockRef.current = true;
+
+                                    setTimeout(() => {
+                                        iniciarPenaltis();
+                                        penaltyLockRef.current = false;
+                                    }, 800);
                                 }
                             }
 
@@ -531,23 +539,22 @@ export default function DraftScreen() {
 
         const novoIndex = matchIndex + 1;
 
-        if (novoIndex > 3) {
+
+        if (novoIndex >= group.length) {
             setGamePhase("table");
+            completarTabela();
             return;
         }
 
-        setMatchIndex(novoIndex);
 
+        setMatchIndex(novoIndex);
         setCurrentMatch(group[novoIndex]);
 
         setMatchStarted(false);
         setMatchFinished(false);
-
         setMatchMinute("0'");
-
         setHomeGoals(0);
         setAwayGoals(0);
-
         setMatchEvents([]);
         setUsedMinutes([]);
     }
@@ -670,31 +677,32 @@ export default function DraftScreen() {
 
 
     function iniciarMataMata() {
-
         const posicaoSeuTime = tabelaOrdenada.findIndex(
-            team => team.team === "Seu Time") + 1;
+            team => team.team === "Seu Time"
+        ) + 1;
 
         if (posicaoSeuTime > 2) {
             setGamePhase("eliminated");
-            return
+            return;
         }
+
+
+        setMatchIndex(0);
+        setGroup([]);
+        setGroupTable([]);
 
         setKnockoutPhase("oitavas");
 
-        sortearAdversarioMataMata()
+        sortearAdversarioMataMata();
 
         setMatchStarted(false);
         setMatchFinished(false);
+        setMatchMinute("0'");
+        setHomeGoals(0);
+        setAwayGoals(0);
+        setMatchEvents([]);
 
-        setMatchMinute("0'")
-        setHomeGoals(0)
-        setAwayGoals(0)
-
-        setMatchEvents([])
-
-        setGamePhase("match")
-
-
+        setGamePhase("match");
     }
 
     function sortearAdversarioMataMata() {
@@ -759,6 +767,7 @@ export default function DraftScreen() {
         clearInterval(matchIntervalRef.current);
 
         penaltyRunningRef.current = false;
+        penaltyLockRef.current = false;
         salvarPenaltiFinal(home, away);
 
         setPenaltyCompleted(true)
@@ -782,6 +791,7 @@ export default function DraftScreen() {
         if (gamePhase !== "match" || penaltyRunningRef.current) return;
 
         penaltyRunningRef.current = true;
+        penaltyLockRef.current = true;
         setPenaltyMode(true);
         setPenaltyEvents([]);
         setPenaltyHome(0);
@@ -1067,29 +1077,50 @@ export default function DraftScreen() {
                                 className="button-draft"
                                 disabled={matchStarted && !matchFinished}
                                 onClick={() => {
+                                    if (matchStarted && !matchFinished) return;
+
+                                    
                                     if (!matchStarted && !matchFinished) {
                                         iniciarPartida();
+                                        return;
                                     }
-                                    else if (matchFinished) {
-                                        // Se estava rolando pênalti, encerramos agora ao clicar
-                                        if (penaltyCompleted) {
-                                            setPenaltyMode(false);
-                                            setPenaltyCompleted(false);
+
+                                    
+                                    if (matchFinished && !penaltyMode && !penaltyCompleted) {
+                                        if (knockoutPhase) {
+                                            
+                                            const venceu = homeGoals > awayGoals;
+
+                                            if (knockoutPhase === "final") {
+                                                setGamePhase(venceu ? "champion" : "eliminated");
+                                            } else {
+                                                venceu ? avancarMataMata() : setGamePhase("eliminated");
+                                            }
+                                            return;
                                         }
 
-                                        const venceu = homeGoals > awayGoals || (penaltyHome > penaltyAway);
+                                        
+                                        if (matchIndex >= group.length - 1) {
+                                            completarTabela();
+                                            setGamePhase("table");
+                                            return;
+                                        } else {
+                                            proximaPartida();
+                                            return;
+                                        }
+                                    }
+
+                                    
+                                    if (penaltyCompleted) {
+                                        const venceuNosPenaltis = penaltyHome > penaltyAway;
+
+                                        setPenaltyMode(false);
+                                        setPenaltyCompleted(false);
 
                                         if (knockoutPhase === "final") {
-                                            setGamePhase(venceu ? "champion" : "eliminated");
-                                        } else if (knockoutPhase) {
-                                            venceu ? avancarMataMata() : setGamePhase("eliminated");
+                                            setGamePhase(venceuNosPenaltis ? "champion" : "eliminated");
                                         } else {
-                                            if (matchIndex >= 2) {
-                                                completarTabela();
-                                                setGamePhase("table");
-                                            } else {
-                                                proximaPartida();
-                                            }
+                                            venceuNosPenaltis ? avancarMataMata() : setGamePhase("eliminated");
                                         }
                                     }
                                 }}
@@ -1220,9 +1251,11 @@ export default function DraftScreen() {
                                     </h2>
 
                                     <ul className="summary-list">
+                                        <li>Seu Time</li>
+
                                         {group.map((team) => (
-                                            <li key={typeof team === "string" ? team : team.name}>
-                                                {typeof team === "string" ? team : team.name}
+                                            <li key={team.name}>
+                                                {team.name}
                                             </li>
                                         ))}
                                     </ul>
