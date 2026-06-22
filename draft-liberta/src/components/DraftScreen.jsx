@@ -745,6 +745,7 @@ export default function DraftScreen() {
         setMatchEvents([]);
         setPenaltyEvents([]);
         setPenaltyMode(false);
+        setPenaltyCompleted(false);
     }
 
 
@@ -771,6 +772,7 @@ export default function DraftScreen() {
         salvarPenaltiFinal(home, away);
 
         setPenaltyCompleted(true)
+        setMatchFinished(true);
 
     }
 
@@ -1079,16 +1081,16 @@ export default function DraftScreen() {
                                 onClick={() => {
                                     if (matchStarted && !matchFinished) return;
 
-                                    
+
                                     if (!matchStarted && !matchFinished) {
                                         iniciarPartida();
                                         return;
                                     }
 
-                                    
+
                                     if (matchFinished && !penaltyMode && !penaltyCompleted) {
                                         if (knockoutPhase) {
-                                            
+
                                             const venceu = homeGoals > awayGoals;
 
                                             if (knockoutPhase === "final") {
@@ -1099,7 +1101,7 @@ export default function DraftScreen() {
                                             return;
                                         }
 
-                                        
+
                                         if (matchIndex >= group.length - 1) {
                                             completarTabela();
                                             setGamePhase("table");
@@ -1110,7 +1112,7 @@ export default function DraftScreen() {
                                         }
                                     }
 
-                                    
+
                                     if (penaltyCompleted) {
                                         const venceuNosPenaltis = penaltyHome > penaltyAway;
 
